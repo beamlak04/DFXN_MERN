@@ -74,9 +74,6 @@ DFXN_MERN/
 
 Contributions, issues, and feature requests are welcome. Feel free to check [issues](https://github.com/beamlak04/DFXN_MERN/issues) or submit a pull request!
 
-## License
-
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
 
 ## Author
 
