@@ -1,6 +1,33 @@
 import Category from "../models/category.model.js";
 import cloudinary from "../lib/cloudinary.js";
+import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
 
+export const adminInfo = async (req, res) => {
+  try {
+    const topSelling = await Order.aggregate([
+      { $unwind: "$products" },
+      {
+        $group: {
+          _id: "$products.product",
+          totalSold: { $sum: "$products.quantity" },
+        },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productInfo",
+        },
+      },
+      { $unwind: "$productInfo" },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 },
+    ]);
+    res.status(201).json({topSelling})
+  } catch (error) {}
+};
 
 export const createCategory = async (req, res) => {
   try {
@@ -109,11 +136,9 @@ export const deleteCategory = async (req, res) => {
       console.log("Error deleting old image from Cloudinary:", error.message);
     }
     await Category.findByIdAndDelete(req.params.id);
-    res.status(200).json({message: "Category deleted Successfully"});
+    res.status(200).json({ message: "Category deleted Successfully" });
   } catch (error) {
     console.log("error delete category: ", error.message);
-    return res.status(500).json({message: error.message});
+    return res.status(500).json({ message: error.message });
   }
 };
-
-

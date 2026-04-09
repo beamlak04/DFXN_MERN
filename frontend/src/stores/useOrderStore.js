@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import axios from "../lib/axios";
-import { useContext } from "react";
-import { CartContext } from "../pages/CartProvider";
-import { clearCart } from "./useCartStore";
 
 export const useOrderStore = create((set) => ({
   loading: false,
@@ -71,4 +68,5 @@ export const useOrderStore = create((set) => ({
       console.log("error deleting Product", error.message)
     }
   },
+  
 }));

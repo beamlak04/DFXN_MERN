@@ -4,8 +4,9 @@
   "description": "",
   "main": "backend/server.js",
   "scripts": {
-    "dev": "nodemon backend/server.js",
-    "start": "node backend/server.js"
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js backend/server.js",
+    "start": "node backend/server.js",
+    "seed:admin": "node backend/scripts/seedAdmin.js"
   },
   "keywords": [],
   "author": "",
