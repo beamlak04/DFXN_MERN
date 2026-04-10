@@ -1,4 +1,5 @@
 import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const FooterComponent = () => {
   return (
@@ -6,9 +7,9 @@ const FooterComponent = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-center items-center gap-6">
           <div className="flex flex-col items-center md:text-left">
-            <a href="/">
+            <Link to="/">
               <h3 className="text-xl font-bold mb-2 font-primary">DFXN</h3>
-            </a>
+            </Link>
             <p className="text-gray-400 text-sm mb-3">
               Premium footwear for the modern lifestyle
             </p>

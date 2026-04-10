@@ -2,8 +2,10 @@ import React, { useContext } from "react";
 import { CartContext } from "./CartProvider";
 import Navbar from "../components/Navbar";
 import { Minus, Plus, Trash2, ScanLine } from "lucide-react"; // icons for elegant controls
+import { Link, useNavigate } from "react-router-dom";
 
 const Cart = () => {
+  const navigate = useNavigate();
   const { cart, removeItem, clearCartItems, updateItemQuantity } =
     useContext(CartContext);
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -96,19 +98,19 @@ const Cart = () => {
         ) : (
           <div className="text-gray-600 text-center">
             <p className="mb-6">Your cart is empty</p>
-            <a
-              href="/products"
+            <Link
+              to="/products"
               className="rounded bg-gray-800 hover:bg-gray-700 text-white py-2 px-5"
             >
               Shop now
-            </a>
+            </Link>
           </div>
         )}
         {cart.length > 0 && (
           <button
             className="bg-gray-800 hover:bg-gray-600 text-white rounded py-2 w-full my-5 md:w-1/5 active:scale-95"
             onClick={() => {
-              window.location = "/place-order";
+              navigate("/place-order");
             }}
             disabled={cart.length === 0}
           >

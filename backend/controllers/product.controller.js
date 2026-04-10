@@ -20,10 +20,6 @@ export const getFeaturedProducts = async (req, res) => {
       return res.json(JSON.parse(featuredProducts));
     }
     featuredProducts = await Product.find({ isFeatured: true }).lean();
-    if (!featuredProducts) {
-      return res.status(404).json({ message: "No featured products found" });
-    }
-
     await redis.set("featured_products", JSON.stringify(featuredProducts));
     res.json(featuredProducts);
   } catch (error) {
@@ -44,7 +40,7 @@ export const createProduct = async (req, res) => {
     if (category === "None") {
       category = null;
     }
-    const product = Product.create({
+    const product = await Product.create({
       name,
       description,
       price,
@@ -91,14 +87,11 @@ export const deleteProduct = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   try {
     // const { category } = req.params.category;
-    const category = await Category.findOne({name:req.params.category});
-    if(!category){
-      return res.status(404).json("cateogry not found")
+    const category = await Category.findOne({ name: req.params.category });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
     }
     const products = await Product.find({ category: category._id });
-    if(!products){
-      return res.status(404).json("products not found")
-    }
     res.json({ products });
   } catch (error) {
     console.log("error in getProductsByCategory", error.message);
@@ -192,17 +185,17 @@ export const editProduct = async (req, res) => {
     }
 
     // Update only if provided
-    if (name) product.name = name;
-    if (description) product.description = description;
-    if (price) product.price = price;
-    if (category) {
+    if (name !== undefined) product.name = name;
+    if (description !== undefined) product.description = description;
+    if (price !== undefined) product.price = price;
+    if (category !== undefined) {
       if (category === "None") {
         product.category = null;
       } else {
         product.category = category;
       }
     }
-    if (stock) product.stock = stock;
+    if (stock !== undefined) product.stock = stock;
 
     // Handle image replacement
     if (image) {

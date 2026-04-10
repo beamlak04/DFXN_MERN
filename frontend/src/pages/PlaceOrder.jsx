@@ -6,12 +6,12 @@ import { Loader } from "lucide-react";
 import toast from "react-hot-toast";
 
 const PlaceOrder = () => {
-  const {cart, clearCartItems} = useContext(CartContext);
+  const { cart, clearCartItems } = useContext(CartContext);
   const { placeOrder, loading } = useOrderStore();
   const [customerDetail, setCustomerDetail] = useState({
     name: "",
     phoneNumber: "",
-    email: "",    
+    email: "",
     address: "",
   });
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -26,27 +26,23 @@ const PlaceOrder = () => {
       );
       return false;
     }
+    setPhoneError("");
     return true;
   };
-  const handleSubmit = async(e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(cart)
-    // Handle form submission logic here
+
     if (validatePhoneNumber(phoneNumber)) {
-      const orderData = { customer: customerDetail, cart: cart };
-      if(cart.length > 0){
-        console.log(orderData.customer)
+      const orderData = { customer: customerDetail, cart };
+      if (cart.length > 0) {
         await placeOrder(orderData);
         clearCartItems();
-      }else{
-        toast.error("cart is empty")
+      } else {
+        toast.error("Cart is empty");
       }
-      
-      // Proceed with form submission logic (e.g., API call)
     } else {
-      console.log("Form submission failed due to validation errors.");
+      toast.error("Please fix the form errors");
     }
-    console.log();
   };
 
   return (
@@ -107,7 +103,7 @@ const PlaceOrder = () => {
               value={phoneNumber}
               onChange={(e) => {
                 setPhoneNumber(e.target.value);
-                setCustomerDetail({...customerDetail, phoneNumber: e.target.value});
+                setCustomerDetail({ ...customerDetail, phoneNumber: e.target.value });
               }}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none transition duration-150 ease-in-out"
             />

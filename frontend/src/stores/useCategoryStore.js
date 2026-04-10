@@ -5,7 +5,7 @@ import axios from "../lib/axios";
 export const useCategoryStore = create((set) => ({
   categories: [],
   loading: false,
-  setCategories: (categories) => ({ categories }),
+  setCategories: (categories) => set({ categories }),
   createCategory: async (categoryData) => {
     set({ loading: true });
     try {
@@ -17,63 +17,63 @@ export const useCategoryStore = create((set) => ({
         categories: [...prevState.categories, response.data.category],
         loading: false,
       }));
-      toast.success("Category created");
+      toast.success("Category created successfully");
     } catch (error) {
-      toast.error(error.respose.data.error);
+      toast.error(error.response?.data?.message || "Failed to create category");
       set({ loading: false });
     }
   },
-  getAllCategories: async() => {
-    set({loading: true});
+  getAllCategories: async () => {
+    set({ loading: true });
     try {
         const response = await axios.get("/admin/categories");
-        set({categories: response.data.categories, loading: false})
+        set({ categories: response.data.categories, loading: false });
     } catch (error) {
-        toast.error(error.response.data.error);
-        set({loading: false});
+        toast.error(error.response?.data?.message || "Failed to load categories");
+        set({ loading: false });
     }
   },
-  editCategory: async(categoryId, categoryData) => {
-    set({loading: true});
+  editCategory: async (categoryId, categoryData) => {
+    set({ loading: true });
     try {
-      const response = await axios.post(`/admin/categories/edit/${categoryId}`,categoryData);
+      const response = await axios.put(`/admin/categories/${categoryId}`, categoryData);
 
       const update = response.data.category;
-      set((state)=>({
+      set(() => ({
         category: update,
         loading: false,
       }));
-      toast.success("Category Updated Successfully");
-      return update
+      toast.success("Category updated successfully");
+      return update;
     } catch (error) {
-      set({loading: false});
-      console.log("error in update category", error.message);
-      toast.error(error.response?.data?.error)
+      set({ loading: false });
+      toast.error(error.response?.data?.message || "Failed to update category");
     }
   },
-  fetchCategoryById: async(categoryId) => {
-    set({loading: true});
+  fetchCategoryById: async (categoryId) => {
+    set({ loading: true });
     try {
       const response = await axios.get(`/admin/categories/${categoryId}`);
-      set({category: response.data.category, loading: false})
+      set({ category: response.data.category, loading: false });
     } catch (error) {
-      set({loading: false});
-      console.log(error.message);
-      toast.error(error.response?.data?.error);
+      set({ loading: false });
+      toast.error(error.response?.data?.message || "Failed to load category");
     }
   },
-  deleteCategory: async(categoryId) => {
-    set({loading: true});
+  deleteCategory: async (categoryId) => {
+    set({ loading: true });
     try {
       await axios.delete(`/admin/categories/${categoryId}`);
       set((prevCategories) => ({
-        categories: prevCategories.categories.filter((category)=>category._id !== categoryId),
+        categories: prevCategories.categories.filter(
+          (category) => category._id !== categoryId
+        ),
         loading: false,
       }));
-      toast.success("Category deleted Successfully");
+      toast.success("Category deleted successfully");
     } catch (error) {
-      set({loading: false});
-      toast.error(error.response.data.error || "Failed to delete category")
+      set({ loading: false });
+      toast.error(error.response?.data?.message || "Failed to delete category");
     }
-  }
+  },
 }));

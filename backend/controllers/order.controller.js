@@ -1,31 +1,33 @@
-import { q } from "framer-motion/client";
 import Order from "../models/order.model.js";
-import Product from "../models/product.model.js";
 
 export const placeOrder = async (req, res) => {
   try {
     const orderData = req.body;
-    let totalAmount = 0;
-    let products = [];
-    orderData.cart.map((item) => {
-      products.push({
-        product: item._id,
-        quantity: item.quantity,
-        price: item.price,
-      });
-      totalAmount += item.price * item.quantity;
-    });
-    if (!products) {
+    if (!Array.isArray(orderData?.cart) || orderData.cart.length === 0) {
       return res.status(400).json({ message: "cart is empty" });
     }
-    const order = Order.create({
+
+    const products = orderData.cart.map((item) => ({
+      product: item._id,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    const totalAmount = products.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const order = await Order.create({
       customer: orderData.customer,
-      products: products,
-      totalAmount: totalAmount,
+      products,
+      totalAmount,
     });
-    res.status(200).json({ order, message: "order placed successfully" });
+
+    res.status(201).json({ order, message: "order placed successfully" });
   } catch (error) {
     console.log("error in order place backend ", error.message);
+    return res.status(500).json({ message: error.message });
   }
 
   // const {customerName, customerEmail, customerPhoneNumber, customerAddress} = orderData.customer;
@@ -62,16 +64,19 @@ export const getOrderById = async (req, res) => {
 export const editOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate({
-        path: "products.product",
-        select: "name image",
-      });
+      path: "products.product",
+      select: "name image",
+    });
     const updatedOrderData = req.body;
     if (!order) {
       return res.status(404).json({ message: "order not found" });
     }
-    if (updatedOrderData.products.length === 0) {
+    if (
+      !Array.isArray(updatedOrderData.products) ||
+      updatedOrderData.products.length === 0
+    ) {
       order.orderStatus = "canceled";
-      order.save();
+      await order.save();
       return res.status(200).json({ message: "Canceled the order" });
     } else {
       order.customer = updatedOrderData.customer;

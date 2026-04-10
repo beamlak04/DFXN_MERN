@@ -28,10 +28,19 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/orders", orderRoutes);
 
-app.listen(PORT, ()=>{
-    console.log("server is running on http://localhost:" + PORT);
-    connectDB();
-})
+const startServer = async () => {
+    try {
+        await connectDB();
+        app.listen(PORT, () => {
+            console.log("server is running on http://localhost:" + PORT);
+        });
+    } catch (error) {
+        console.log("failed to start server", error.message);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 
 

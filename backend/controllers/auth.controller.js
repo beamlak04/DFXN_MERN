@@ -119,6 +119,9 @@ export const refreshAccessToken = async(req, res) => {
         })
         res.json({message: "Token refreshed successfully"})
     } catch (error) {
+        if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
+            return res.status(401).json({ message: "Invalid or expired refresh token" });
+        }
         res.status(500).json({message: error.message})
     }
 }

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AdminNav from "../components/AdminNav";
 import { useCategoryStore } from "../stores/useCategoryStore";
 import { HashLink } from "react-router-hash-link";
+import { Link } from "react-router-dom";
 import {
   Upload,
   PlusCircle,
@@ -51,13 +52,13 @@ const AdminCategory = () => {
         image: "",
       });
     } catch (error) {
-      console.log("error admincategory.jsx", error.message);
+      // Errors are surfaced via store toasts.
     }
   };
 
   return (
     <div>
-      <AdminNav activePage={"categories"}>
+      <AdminNav activePage="categories">
         {/* Categories Section */}
         <div className="rounded border shadow-sm">
           <div className="px-4 py-3 border-b flex items-center justify-between">
@@ -109,12 +110,12 @@ const AdminCategory = () => {
                       {category.description}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <a
-                        href={`/admin/categories/edit/${category._id}`}
+                      <Link
+                        to={`/admin/categories/${category._id}/edit`}
                         className="hover:text-gray-500"
                       >
                         <Edit className="h-5 w-5" />
-                      </a>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button
@@ -153,12 +154,12 @@ const AdminCategory = () => {
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  <a
-                    href={`/admin/categories/edit/${category._id}`}
+                  <Link
+                    to={`/admin/categories/${category._id}/edit`}
                     className="hover:text-gray-500"
                   >
                     <Edit className="h-4 w-4" />
-                  </a>
+                  </Link>
                   <button
                     className="text-red-400 hover:text-red-300"
                     onClick={() => deleteCategory(category._id)}

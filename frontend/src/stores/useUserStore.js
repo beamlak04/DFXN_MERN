@@ -12,16 +12,16 @@ export const useUserStore = create((set, get) => ({
 
     if (password !== confirmPassword) {
       set({ loading: false });
-      return toast.error("passwords do not match");
+      return toast.error("Passwords do not match");
     }
 
     try {
       const res = await axios.post("/auth/signup", { name, email, password });
       set({ user: res.data, loading: false });
-      window.location.reload();
+      toast.success("Account created successfully");
     } catch (error) {
       set({ loading: false });
-      toast.error(error.response.data.message || "error try again later");
+      toast.error(error.response?.data?.message || "Please try again later");
     }
   },
   login: async (email, password) => {
@@ -30,21 +30,19 @@ export const useUserStore = create((set, get) => ({
     try {
       const res = await axios.post("/auth/login", { email, password });
       set({ user: res.data, loading: false });
-      window.location.href = "/";
+      toast.success("Logged in successfully");
     } catch (error) {
       set({ loading: false });
-      toast.error(error.response.data.message || "error try again later");
+      toast.error(error.response?.data?.message || "Please try again later");
     }
   },
   logout: async () => {
     try {
-      await axios.post("auth/logout");
+      await axios.post("/auth/logout");
       set({ user: null });
-      window.location.href = "/";
+      toast.success("Logged out successfully");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "An error occured logging out"
-      );
+      toast.error(error.response?.data?.message || "An error occurred logging out");
     }
   },
   checkAuth: async () => {

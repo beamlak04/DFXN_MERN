@@ -3,6 +3,7 @@ import React from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Home, Mail, Lock, Loader } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { useUserStore } from "../stores/useUserStore";
 
@@ -18,13 +19,13 @@ const LogInPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col justify-center relative">
-      <a
-        href="/"
+      <Link
+        to="/"
         className="absolute top-3 left-3 flex gap-1 hover:text-blue-500 hover:cursor-pointer"
       >
         <Home />
         Back to Home page
-      </a>
+      </Link>
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -104,11 +105,11 @@ const LogInPage = () => {
                 )}
               </button>
               <p className="text-center mt-1">
-                Don't have an account ?
-                <a href="/signup" className="text-gray-800 underline">
+                Don't have an account?
+                <Link to="/signup" className="text-gray-800 underline">
                   {" "}
                   Sign up
-                </a>
+                </Link>
               </p>
             </div>
           </form>

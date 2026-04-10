@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
 
 import {
   Mail,
@@ -9,11 +10,17 @@ import {
   Twitter,
 } from "lucide-react";
 import { useUserStore } from "../stores/useUserStore";
+import { useProductStore } from "../stores/useProductStore";
 import Navbar from "../components/Navbar";
 import FooterComponent from "../components/FooterComponent";
 
 const HomePage = () => {
   const { user } = useUserStore();
+  const { featuredProducts, fetchFeaturedProducts, loading } = useProductStore();
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, [fetchFeaturedProducts]);
   
   return (
     <div>
@@ -28,17 +35,56 @@ const HomePage = () => {
           <h1 className="text-3xl md:text-5xl text-center">
             Find Your Perfect <br /> Pair Today
           </h1>
-          <a
-            href="/"
+          <Link
+            to="/products"
             className=" p-3 rounded-full bg-gray-800 text-xl text-white hover:bg-gray-700 active:scale-95"
           >
             Shop now
-          </a>
+          </Link>
         </div>
       </div>
 
       {/* Featured Products */}
-      <div></div>
+      <div className="mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14">
+        <h2 className="text-center text-3xl font-semibold mb-10">
+          Featured Products
+        </h2>
+
+        {loading ? (
+          <p className="text-center text-gray-500">Loading featured products...</p>
+        ) : featuredProducts.length === 0 ? (
+          <p className="text-center text-gray-500">No featured products yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredProducts.slice(0, 8).map((product) => (
+              <Link
+                key={product._id}
+                to={`/products/${product._id}`}
+                className="rounded-xl border shadow-sm hover:shadow-md transition overflow-hidden bg-white"
+              >
+                <div className="w-full h-56 bg-gray-100 overflow-hidden">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-800 truncate">
+                    {product.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 line-clamp-2 min-h-[40px]">
+                    {product.description}
+                  </p>
+                  <p className="mt-3 font-bold text-gray-900">
+                    ETB {Number(product.price || 0).toFixed(2)}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Categories */}
       <div className="mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14 lg:py-20">
@@ -47,8 +93,8 @@ const HomePage = () => {
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
           
-          <a
-            href="/category/running-trainers"
+          <Link
+            to="/category/running-trainers"
             className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
           >
             <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
@@ -61,10 +107,10 @@ const HomePage = () => {
             <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
               Running Trainers
             </h3>
-          </a>
+          </Link>
 
-          <a
-            href="/category/casual-trainers"
+          <Link
+            to="/category/casual-trainers"
             className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
           >
             <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
@@ -77,10 +123,10 @@ const HomePage = () => {
             <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
               Casual Trainers
             </h3>
-          </a>
+          </Link>
 
-          <a
-            href="/category/gym-trainers"
+          <Link
+            to="/category/gym-trainers"
             className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
           >
             <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
@@ -93,10 +139,10 @@ const HomePage = () => {
             <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
               Basketball
             </h3>
-          </a>
+          </Link>
 
-          <a
-            href="/category/hiking-trainers"
+          <Link
+            to="/category/hiking-trainers"
             className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
           >
             <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
@@ -109,7 +155,7 @@ const HomePage = () => {
             <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
               High tops
             </h3>
-          </a>
+          </Link>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Trash,
   Star,
@@ -9,6 +9,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { HashLink } from "react-router-hash-link";
+import { Link } from "react-router-dom";
 import { useProductStore } from "../stores/useProductStore";
 import AdminNav from "../components/AdminNav";
 import { useCategoryStore } from "../stores/useCategoryStore";
@@ -71,13 +72,13 @@ const AdminProducts = () => {
         image: "",
       });
     } catch (error) {
-      console.log("error creating a product: " + error.message);
+      // Errors are surfaced via store toasts.
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <AdminNav activePage={"products"}>
+      <AdminNav activePage="products">
         <div className="rounded border shadow-sm">
           {/* Header with Add & Search */}
           <div className="px-4 py-3 border-b flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -142,12 +143,12 @@ const AdminProducts = () => {
                         </button>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <a
-                          href={`/admin/products/edit/${product._id}`}
+                        <Link
+                          to={`/admin/products/${product._id}/edit`}
                           className="hover:text-gray-500"
                         >
                           <Edit className="h-5 w-5" />
-                        </a>
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
