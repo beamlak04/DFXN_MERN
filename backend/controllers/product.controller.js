@@ -40,10 +40,12 @@ export const createProduct = async (req, res) => {
     if (category === "None") {
       category = null;
     }
+    let stock = 5;
     const product = await Product.create({
       name,
       description,
       price,
+      stock,
       image: cloudinaryResponse?.secure_url
         ? cloudinaryResponse.secure_url
         : "",
@@ -138,42 +140,6 @@ export const getProduct = async (req, res) => {
     return res.status(500).json({ message: "Server error: " + error.message });
   }
 };
-// export const editProduct = async (req, res) => {
-//   try {
-//     const product = await Product.findById(req.params.id);
-//     const { name, description, price, category, image } = req.body;
-
-//     if (product) {
-//       product.name = name;
-//       product.description = description;
-//       product.price = price;
-//       product.category = category;
-//       if (image) {
-//         const publicId = product.image.split("/").pop().split(".")[0];
-//         try {
-//           await cloudinary.uploader.destroy(`products/${publicId}`);
-//           console.log("Image deleted from cloudinary");
-//         } catch (error) {
-//           console.log("Error deleting image from cloudinary", error.message);
-//         }
-//         let cloudinaryResponse = await cloudinary.uploader.upload(image, {
-//           folder: "products",
-//         });
-//         product.image = cloudinaryResponse?.secure_url
-//           ? cloudinaryResponse.secure_url
-//           : "";
-//       }
-//       await product.save();
-//       res
-//         .status(201)
-//         .json({ product, message: "Product updated Successfully" });
-//     }
-//     return res.status(404).json({ message: "Product not found" });
-//   } catch (error) {
-//     console.log("error editing product: ", error.message);
-//     return res.status(500).json({ message: "Server error: " + error.message });
-//   }
-// };
 
 export const editProduct = async (req, res) => {
   try {
@@ -222,6 +188,9 @@ export const editProduct = async (req, res) => {
     }
 
     await product.save();
+    if (product.isFeatured) {
+      await updateFeaturedProductsCache();
+    }
 
     return res.status(200).json({
       message: "Product updated successfully",

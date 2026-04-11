@@ -84,11 +84,12 @@ const Orders = () => {
                       {/* Shortened OrderId with toggle */}
                       <td className="px-4 py-3">
                         <button
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setExpandedOrderId(
                               expandedOrderId === order._id ? null : order._id
-                            )
-                          }
+                            );
+                          }}
                           className="text-gray-800 font-mono text-xs underline"
                         >
                           {expandedOrderId === order._id
@@ -110,7 +111,8 @@ const Orders = () => {
                       <td className="px-4 py-3 text-center space-x-2">
                         <button
                           className="text-red-600 hover:text-red-900 text-xs"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             deleteOrder(order._id);
                           }}
                         >

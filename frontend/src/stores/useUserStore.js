@@ -17,7 +17,7 @@ export const useUserStore = create((set, get) => ({
 
     try {
       const res = await axios.post("/auth/signup", { name, email, password });
-      set({ user: res.data, loading: false });
+      set({ user: res.data.user, loading: false });
       toast.success("Account created successfully");
     } catch (error) {
       set({ loading: false });
@@ -29,7 +29,7 @@ export const useUserStore = create((set, get) => ({
 
     try {
       const res = await axios.post("/auth/login", { email, password });
-      set({ user: res.data, loading: false });
+      set({ user: res.data.user, loading: false });
       toast.success("Logged in successfully");
     } catch (error) {
       set({ loading: false });
@@ -67,28 +67,3 @@ export const useUserStore = create((set, get) => ({
     }
   },
 }));
-
-// let refreshPromise = null;
-// axios.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
-//     console.log('k')
-//     console.log("first")
-//     if (error.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
-//       if (!refreshPromise) {
-//         refreshPromise = useUserStore.getState().refreshToken();
-//       }
-//       try {
-//         await refreshPromise;
-//         refreshPromise = null;
-//         return axios({...originalRequest, withCredentials: true});
-//       } catch (refreshError) {
-//         useUserStore.getState().logout();
-//         return Promise.reject(error);
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );

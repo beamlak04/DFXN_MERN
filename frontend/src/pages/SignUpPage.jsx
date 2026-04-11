@@ -15,6 +15,11 @@ const SignUpPage = () => {
   });
 
   const { signup, loading } = useUserStore();
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     signup(formData);
@@ -58,13 +63,12 @@ const SignUpPage = () => {
                   <User />
                 </span>
                 <input
+                  name="name"
                   id="name"
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={handleChange}
                   className="pl-9 py-1 w-full rounded-md focus:outline-none shadow"
                   placeholder="John Doe"
                 />
@@ -80,13 +84,12 @@ const SignUpPage = () => {
                   <Mail />
                 </span>
                 <input
+                  name="email"
                   id="email"
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={handleChange}
                   className="pl-9 py-1 w-full rounded-md focus:outline-none shadow"
                   placeholder="John@example.com"
                 />
@@ -102,13 +105,12 @@ const SignUpPage = () => {
                   <Lock />
                 </span>
                 <input
+                  name="password"
                   id="password"
                   type="password"
                   required
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={handleChange}
                   className="pl-9 py-1 w-full rounded-md focus:outline-none shadow"
                   placeholder="********"
                 />
@@ -124,16 +126,12 @@ const SignUpPage = () => {
                   <Lock />
                 </span>
                 <input
+                  name="confirmPassword"
                   id="confirmPassword"
                   type="password"
                   required
                   value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
+                  onChange={handleChange}
                   className="pl-9 py-1 w-full rounded-md focus:outline-none shadow"
                   placeholder="********"
                 />

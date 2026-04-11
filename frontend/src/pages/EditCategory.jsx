@@ -50,7 +50,10 @@ const EditCategory = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await editCategory(id, newCategory);
+    const updated = await editCategory(id, newCategory);
+    if (updated) {
+      navigate(-1);
+    }
   }
 
   return (

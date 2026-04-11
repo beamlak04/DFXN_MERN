@@ -1,11 +1,15 @@
-import React, { useEffect } from 'react'
-import { useProductStore } from '../stores/useProductStore'
+import React from "react";
+import { Navigate, useParams } from "react-router-dom";
 
 const CategoryPage = () => {
+  const { category } = useParams();
 
   return (
-    <div>CategoryPage</div>
-  )
-}
+    <Navigate
+      to={`/products?category=${encodeURIComponent(category || "")}`}
+      replace
+    />
+  );
+};
 
-export default CategoryPage
+export default CategoryPage;

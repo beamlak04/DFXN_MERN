@@ -66,8 +66,10 @@ const EditProductPage = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await editProduct(id, newProduct);
-    
+    const updated = await editProduct(id, newProduct);
+    if (updated) {
+      navigate(-1);
+    }
   };
 
   return (

@@ -14,10 +14,13 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT;
+const allowedOrigins = process.env.CLIENT_URLS
+    ? process.env.CLIENT_URLS.split(",").map((origin) => origin.trim()).filter(Boolean)
+    : ["http://localhost:5173", "http://192.168.1.11:5173"];
 
 app.use(express.json({limit:"5mb"}));
 app.use(cors({
-    origin:["http://localhost:5173","http://192.168.1.11:5173"],
+    origin: allowedOrigins,
     credentials: true,
 }))
 app.use(cookieParser());

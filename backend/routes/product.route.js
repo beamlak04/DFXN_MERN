@@ -10,7 +10,6 @@ router.get("/:id", getProduct)
 router.get("/",  getAllProducts)
 router.post("/", protectRoute, adminRoute, createProduct)
 router.put("/:id", protectRoute, adminRoute, editProduct)
-router.post("/editProduct/:id", protectRoute, adminRoute, editProduct)
 router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct)
 router.delete("/:id", protectRoute, adminRoute, deleteProduct)
 

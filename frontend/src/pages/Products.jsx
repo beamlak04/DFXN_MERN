@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, ShoppingCart } from "lucide-react";
 import Navbar from "../components/Navbar";
 import { useProductStore } from "../stores/useProductStore";
@@ -9,6 +9,7 @@ import { CartContext } from "./CartProvider";
 
 const Products = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { addItem } = useContext(CartContext);
   const { products, fetchAllProducts, fetchProductsByCategory, loading } =
     useProductStore();
@@ -18,22 +19,37 @@ const Products = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 15;
+  const selectedCategoryFromQuery = searchParams.get("category") || "all";
 
   useEffect(() => {
-    fetchAllProducts();
     getAllCategories();
-  }, [fetchAllProducts, getAllCategories]);
+  }, [getAllCategories]);
+
+  useEffect(() => {
+    const normalizedCategory =
+      selectedCategoryFromQuery === "all"
+        ? "all"
+        : decodeURIComponent(selectedCategoryFromQuery);
+
+    setSelectedCategory(normalizedCategory);
+    setCurrentPage(1);
+
+    if (normalizedCategory === "all") {
+      fetchAllProducts();
+    } else {
+      fetchProductsByCategory(normalizedCategory);
+    }
+  }, [selectedCategoryFromQuery, fetchAllProducts, fetchProductsByCategory]);
 
   const handleCategoryChange = async (e) => {
     const value = e.target.value;
-    setSelectedCategory(value);
-    setCurrentPage(1);
-
+    const nextParams = new URLSearchParams(searchParams);
     if (value === "all") {
-      fetchAllProducts();
+      nextParams.delete("category");
     } else {
-      fetchProductsByCategory(value);
+      nextParams.set("category", value);
     }
+    setSearchParams(nextParams);
   };
 
   // Filtering + searching

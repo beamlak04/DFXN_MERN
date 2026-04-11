@@ -9,18 +9,23 @@ import {
   Instagram,
   Twitter,
 } from "lucide-react";
-import { useUserStore } from "../stores/useUserStore";
 import { useProductStore } from "../stores/useProductStore";
+import { useCategoryStore } from "../stores/useCategoryStore";
 import Navbar from "../components/Navbar";
 import FooterComponent from "../components/FooterComponent";
 
 const HomePage = () => {
-  const { user } = useUserStore();
   const { featuredProducts, fetchFeaturedProducts, loading } = useProductStore();
+  const {
+    categories,
+    getAllCategories,
+    loading: categoriesLoading,
+  } = useCategoryStore();
 
   useEffect(() => {
     fetchFeaturedProducts();
-  }, [fetchFeaturedProducts]);
+    getAllCategories();
+  }, [fetchFeaturedProducts, getAllCategories]);
   
   return (
     <div>
@@ -45,119 +50,83 @@ const HomePage = () => {
       </div>
 
       {/* Featured Products */}
-      <div className="mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14">
-        <h2 className="text-center text-3xl font-semibold mb-10">
-          Featured Products
-        </h2>
+      {(loading || featuredProducts.length > 0) && (
+        <div className="mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14">
+          <h2 className="text-center text-3xl font-semibold mb-10">
+            Featured Products
+          </h2>
 
-        {loading ? (
-          <p className="text-center text-gray-500">Loading featured products...</p>
-        ) : featuredProducts.length === 0 ? (
-          <p className="text-center text-gray-500">No featured products yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.slice(0, 8).map((product) => (
-              <Link
-                key={product._id}
-                to={`/products/${product._id}`}
-                className="rounded-xl border shadow-sm hover:shadow-md transition overflow-hidden bg-white"
-              >
-                <div className="w-full h-56 bg-gray-100 overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 truncate">
-                    {product.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 line-clamp-2 min-h-[40px]">
-                    {product.description}
-                  </p>
-                  <p className="mt-3 font-bold text-gray-900">
-                    ETB {Number(product.price || 0).toFixed(2)}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+          {loading ? (
+            <p className="text-center text-gray-500">Loading featured products...</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.slice(0, 8).map((product) => (
+                <Link
+                  key={product._id}
+                  to={`/products/${product._id}`}
+                  className="rounded-xl border shadow-sm hover:shadow-md transition overflow-hidden bg-white"
+                >
+                  <div className="w-full h-56 bg-gray-50 overflow-hidden p-4 flex items-center justify-center">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-contain object-center"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 truncate">
+                      {product.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 line-clamp-2 min-h-[40px]">
+                      {product.description}
+                    </p>
+                    <p className="mt-3 font-bold text-gray-900">
+                      ETB {Number(product.price || 0).toFixed(2)}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Categories */}
-      <div className="mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14 lg:py-20">
-        <h2 className="text-center text-3xl font-semibold my-10">
-          Shop Trainers by Category
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
-          
-          <Link
-            to="/category/running-trainers"
-            className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
-          >
-            <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
-              <img
-                src="/running.png"
-                alt="Running Trainers"
-                className="w-full h-full object-contain transform transition-transform duration-500 hover:scale-110"
-              />
+      {(categoriesLoading || categories.length > 0) && (
+        <div className="mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-14 lg:py-20">
+          <h2 className="text-center text-3xl font-semibold my-10">
+            Shop Trainers by Category
+          </h2>
+          {categoriesLoading ? (
+            <p className="text-center text-gray-500">Loading categories...</p>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+              {categories.map((category) => (
+                <Link
+                  key={category._id}
+                  to={`/products?category=${encodeURIComponent(category.name)}`}
+                  className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
+                >
+                  <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden bg-gray-50 p-3">
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="w-full h-full object-contain transform transition-transform duration-500 hover:scale-105"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-500">{category.name}</span>
+                    )}
+                  </div>
+                  <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
+                    {category.name}
+                  </h3>
+                </Link>
+              ))}
             </div>
-            <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
-              Running Trainers
-            </h3>
-          </Link>
-
-          <Link
-            to="/category/casual-trainers"
-            className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
-          >
-            <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
-              <img
-                src="/casual.png"
-                alt="Casual Trainers"
-                className="w-full h-full object-contain transform transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
-              Casual Trainers
-            </h3>
-          </Link>
-
-          <Link
-            to="/category/gym-trainers"
-            className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
-          >
-            <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
-              <img
-                src="/basketball.png"
-                alt="Basketball Trainers"
-                className="w-full h-full object-contain transform transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
-              Basketball
-            </h3>
-          </Link>
-
-          <Link
-            to="/category/hiking-trainers"
-            className="rounded-md overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white"
-          >
-            <div className="w-full h-32 sm:h-40 lg:h-48 flex items-center justify-center overflow-hidden">
-              <img
-                src="/hightops.png"
-                alt="High Tops"
-                className="w-full h-full object-contain transform transition-transform duration-500 hover:scale-110"
-              />
-            </div>
-            <h3 className="text-lg text-center font-semibold text-gray-800 py-4">
-              High tops
-            </h3>
-          </Link>
+          )}
         </div>
-      </div>
+      )}
 
       {/* About Us */}
       <div className="bg-gray-50 " id="About">

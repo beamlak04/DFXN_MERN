@@ -32,8 +32,11 @@ const LogInPage = () => {
         transition={{ duration: 0.8 }}
       >
         <h2 className="text-center font-bold text-gray-800 text-2xl my-3">
-          Login To Your Account
+          Admin Login
         </h2>
+        <p className="text-center text-sm text-gray-600">
+          Authorized administrators only
+        </p>
       </motion.div>
 
       <motion.div
@@ -104,13 +107,6 @@ const LogInPage = () => {
                   <>Login</>
                 )}
               </button>
-              <p className="text-center mt-1">
-                Don't have an account?
-                <Link to="/signup" className="text-gray-800 underline">
-                  {" "}
-                  Sign up
-                </Link>
-              </p>
             </div>
           </form>
         </div>

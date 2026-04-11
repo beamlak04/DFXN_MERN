@@ -7,9 +7,7 @@ import {
   Users,
   BarChart3,
   Settings,
-  PlusCircle,
   Menu,
-  Search,
   LogOut,
   X,
 } from "lucide-react";
@@ -22,7 +20,6 @@ const NAV = [
   { id: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders" },
   { id: "categories", label: "Categories", icon: Users, to: "/admin/categories" },
   { id: "analytics", label: "Analytics", icon: BarChart3, to: "/admin/analytics" },
-  { id: "settings", label: "Settings", icon: Settings, to: "/admin/settings" },
 ];
 
 export default function AdminNav({ children }) {
@@ -32,7 +29,10 @@ export default function AdminNav({ children }) {
   const {logout} = useUserStore();
 
   // const Title = NAV.find((n) => (n.to === location.pathname)?.label) || "Admin";
-  const Title = NAV.find((n) => location.pathname.includes(n.to))?.label || "Admin";
+  const Title =
+    location.pathname.includes("/admin/settings")
+      ? "Settings"
+      : NAV.find((n) => location.pathname.includes(n.to))?.label || "Admin";
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Topbar */}
@@ -58,16 +58,13 @@ export default function AdminNav({ children }) {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-100">
-              <Search className="h-4 w-4" />
-              <input
-                placeholder="Search…"
-                className="bg-transparent outline-none text-sm w-40"
-              />
-            </div>
-            <button className="p-2 rounded-xl hover:bg-gray-100" title="Create">
-              <PlusCircle className="h-5 w-5" />
-            </button>
+            <Link
+              to="/admin/settings"
+              className="p-2 rounded-xl hover:bg-gray-100"
+              title="Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </Link>
             <button
               className="p-2 rounded-xl hover:bg-gray-100"
               title="Log out"

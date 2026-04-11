@@ -16,7 +16,6 @@ import Orders from "./pages/Orders";
 import PlaceOrder from "./pages/PlaceOrder";
 import Product from "./pages/Product";
 import Products from "./pages/Products";
-import SignUpPage from "./pages/SignUpPage";
 import AdminProducts from "./pages/AdminProducts";
 import { useUserStore } from "./stores/useUserStore";
 import AdminCategory from "./pages/AdminCategory";
@@ -41,18 +40,15 @@ function App() {
         <Route path="/products/:id" element={<Product />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/place-order" element={<PlaceOrder />} />
-        <Route
-          path="/signup"
-          element={!user ? <SignUpPage /> : <Navigate to="/" />}
-        />
-        <Route path="/signUp" element={<Navigate to="/signup" replace />} />
+        <Route path="/signup" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/signUp" element={<Navigate to="/admin/login" replace />} />
         <Route
           path="/admin/login"
-          element={!user ? <LogInPage /> : <Navigate to="/" />}
+          element={!admin ? <LogInPage /> : <Navigate to="/admin/dashboard" replace />}
         />
         <Route
           path="/admin"
-          element={!admin ? <Navigate to="/admin/login" /> : <AdminDashboard />}
+          element={!admin ? <Navigate to="/admin/login" replace /> : <Navigate to="/admin/dashboard" replace />}
         />
         <Route path="/category/:category" element={<CategoryPage />} />
         <Route
