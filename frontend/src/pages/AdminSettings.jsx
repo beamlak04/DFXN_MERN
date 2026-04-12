@@ -5,10 +5,12 @@ import { useAdminStore } from "../stores/useAdminStore";
 const AdminSettings = () => {
   const {
     settingsProfile,
+    settingsContactNotifications,
     settingsLoading,
     fetchSettings,
     updateProfile,
     updatePassword,
+    updateContactNotificationSettings,
   } = useAdminStore();
 
   const [profileForm, setProfileForm] = useState({ name: "", email: "" });
@@ -16,6 +18,10 @@ const AdminSettings = () => {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
+  });
+  const [notificationForm, setNotificationForm] = useState({
+    emailNotificationsEnabled: true,
+    contactNotifyTo: "",
   });
 
   useEffect(() => {
@@ -28,6 +34,13 @@ const AdminSettings = () => {
       email: settingsProfile.email || "",
     });
   }, [settingsProfile]);
+
+  useEffect(() => {
+    setNotificationForm({
+      emailNotificationsEnabled: settingsContactNotifications.emailNotificationsEnabled,
+      contactNotifyTo: settingsContactNotifications.contactNotifyTo || "",
+    });
+  }, [settingsContactNotifications]);
 
   const submitProfile = async (e) => {
     e.preventDefault();
@@ -44,6 +57,11 @@ const AdminSettings = () => {
       newPassword: passwordForm.newPassword,
     });
     setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  };
+
+  const submitNotifications = async (e) => {
+    e.preventDefault();
+    await updateContactNotificationSettings(notificationForm);
   };
 
   return (
@@ -160,6 +178,48 @@ const AdminSettings = () => {
               </button>
             </form>
           </div>
+
+          <form onSubmit={submitNotifications} className="bg-white rounded-xl shadow p-6 space-y-4 max-w-2xl">
+            <h2 className="text-lg font-semibold">Contact Notifications</h2>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={notificationForm.emailNotificationsEnabled}
+                onChange={(e) =>
+                  setNotificationForm({
+                    ...notificationForm,
+                    emailNotificationsEnabled: e.target.checked,
+                  })
+                }
+              />
+              <span className="text-sm text-gray-700">Enable email notifications for new customer complaints</span>
+            </label>
+
+            <div>
+              <label className="block text-sm text-gray-500 mb-1">Notification recipient email</label>
+              <input
+                type="email"
+                value={notificationForm.contactNotifyTo}
+                onChange={(e) =>
+                  setNotificationForm({
+                    ...notificationForm,
+                    contactNotifyTo: e.target.value,
+                  })
+                }
+                className="w-full border rounded-md px-3 py-2"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="bg-gray-900 text-white px-4 py-2 rounded-md"
+              disabled={settingsLoading}
+            >
+              {settingsLoading ? "Saving..." : "Save Notification Settings"}
+            </button>
+          </form>
         </div>
       </AdminNav>
     </div>

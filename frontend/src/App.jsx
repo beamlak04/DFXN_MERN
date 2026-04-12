@@ -21,6 +21,7 @@ import { useUserStore } from "./stores/useUserStore";
 import AdminCategory from "./pages/AdminCategory";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
+import AdminContactMessages from "./pages/AdminContactMessages";
 
 function App() {
   const { user, checkAuth, checkingAuth } = useUserStore();
@@ -70,6 +71,14 @@ function App() {
         <Route
           path="/admin/categories"
           element={!admin ? <Navigate to="/admin/login" /> : <AdminCategory />}
+        />
+        <Route
+          path="/admin/contacts"
+          element={!admin ? <Navigate to="/admin/login" /> : <AdminContactMessages />}
+        />
+        <Route
+          path="/admin/complaints"
+          element={!admin ? <Navigate to="/admin/login" /> : <AdminContactMessages />}
         />
         <Route
           path="/admin/categories/:id/edit"

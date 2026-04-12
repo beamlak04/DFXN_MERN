@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { useProductStore } from "../stores/useProductStore";
 import AdminNav from "../components/AdminNav";
 import { useCategoryStore } from "../stores/useCategoryStore";
+import { createImagePreview } from "../lib/imagePreview";
 
 const AdminProducts = () => {
   const {
@@ -31,7 +32,16 @@ const AdminProducts = () => {
     price: "",
     category: "",
     image: "",
+    imageOptions: {
+      cropMode: "fill",
+      width: 900,
+      height: 900,
+      removeBackground: false,
+    },
   });
+  const [imagePreview, setImagePreview] = useState("");
+  const [imagePreviewLoading, setImagePreviewLoading] = useState(false);
+  const [imagePreviewNotice, setImagePreviewNotice] = useState("");
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -54,9 +64,33 @@ const AdminProducts = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewProduct({ ...newProduct, image: reader.result });
+        setNewProduct((prev) => ({ ...prev, image: reader.result }));
+        setImagePreview("");
+        setImagePreviewNotice("");
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const applyImagePreview = async () => {
+    if (!newProduct.image) {
+      return;
+    }
+
+    setImagePreviewLoading(true);
+    setImagePreviewNotice("");
+
+    try {
+      const processedPreview = await createImagePreview(newProduct.image, newProduct.imageOptions);
+      setImagePreview(processedPreview);
+      if (newProduct.imageOptions.removeBackground) {
+        setImagePreviewNotice("Background removal is applied on save; preview shows crop and sizing only.");
+      }
+    } catch (error) {
+      setImagePreview("");
+      setImagePreviewNotice(error.message || "Preview generation failed");
+    } finally {
+      setImagePreviewLoading(false);
     }
   };
 
@@ -70,6 +104,12 @@ const AdminProducts = () => {
         price: "",
         category: "",
         image: "",
+        imageOptions: {
+          cropMode: "fill",
+          width: 900,
+          height: 900,
+          removeBackground: false,
+        },
       });
     } catch (error) {
       // Errors are surfaced via store toasts.
@@ -176,115 +216,229 @@ const AdminProducts = () => {
         </div>
 
         {/* Create Product Form */}
-        <div className="rounded shadow-sm border mt-6" id="createProduct">
+        <div className="rounded shadow-sm border mt-6 bg-white" id="createProduct">
           <div className="px-4 py-3 border-b flex items-center justify-between">
-            <h3 className="font-medium">Create a Product</h3>
+            <h3 className="font-semibold text-lg">Create a Product</h3>
           </div>
           <form
             onSubmit={handleSubmit}
-            className="p-6 grid grid-cols-1 sm:grid-cols-2 items-end gap-6"
+            className="p-6 grid grid-cols-1 lg:grid-cols-2 items-start gap-6"
           >
-            {/* Product Name */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500">
-                Product Name
-              </label>
-              <input
-                type="text"
-                value={newProduct.name}
-                placeholder="Enter product name"
-                required
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-gray-800 focus:outline-none"
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, name: e.target.value })
-                }
-              />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  value={newProduct.name}
+                  placeholder="Enter product name"
+                  required
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-gray-800 focus:outline-none"
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500">
+                  Price
+                </label>
+                <input
+                  type="number"
+                  value={newProduct.price}
+                  required
+                  step={0.01}
+                  placeholder="0.00"
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-gray-800 focus:outline-none"
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, price: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500">
+                  Description
+                </label>
+                <textarea
+                  value={newProduct.description}
+                  required
+                  rows={3}
+                  placeholder="Enter product description"
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      description: e.target.value,
+                    })
+                  }
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-gray-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500">
+                  Category
+                </label>
+                <select
+                  value={newProduct.category}
+                  required
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-md px-3 py-2 text-sm border border-gray-300 focus:ring-1 focus:ring-gray-800 focus:outline-none"
+                >
+                  <option value="" disabled>Select Category</option>
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                  <option value="None">None</option>
+                </select>
+              </div>
             </div>
 
-            {/* Price */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500">
-                Price
-              </label>
-              <input
-                type="number"
-                value={newProduct.price}
-                required
-                step={0.01}
-                placeholder="0.00"
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-gray-800 focus:outline-none"
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, price: e.target.value })
-                }
-              />
-            </div>
+            <div className="space-y-4">
+              <div className="border rounded-lg p-4 bg-slate-50">
+                <h4 className="font-medium text-sm mb-3">Image Processing</h4>
 
-            {/* Description */}
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-gray-500">
-                Description
-              </label>
-              <textarea
-                value={newProduct.description}
-                required
-                rows={3}
-                placeholder="Enter product description"
-                onChange={(e) =>
-                  setNewProduct({
-                    ...newProduct,
-                    description: e.target.value,
-                  })
-                }
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-gray-800 focus:outline-none"
-              />
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Crop Mode</label>
+                    <select
+                      value={newProduct.imageOptions.cropMode}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          imageOptions: {
+                            ...newProduct.imageOptions,
+                            cropMode: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full rounded-md px-3 py-2 text-sm border border-gray-300"
+                    >
+                      <option value="fill">Fill (best for cards)</option>
+                      <option value="fit">Fit</option>
+                      <option value="pad">Pad</option>
+                      <option value="scale">Scale</option>
+                    </select>
+                  </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-xs font-medium text-gray-500">
-                Category
-              </label>
-              <select
-                value={newProduct.category}
-                required
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, category: e.target.value })
-                }
-                className="mt-1 w-full rounded-md px-3 py-2 text-sm border border-gray-300 focus:ring-1 focus:ring-gray-800 focus:outline-none"
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Width</label>
+                    <input
+                      type="number"
+                      min={200}
+                      max={2000}
+                      value={newProduct.imageOptions.width}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          imageOptions: {
+                            ...newProduct.imageOptions,
+                            width: Number(e.target.value || 900),
+                          },
+                        })
+                      }
+                      className="w-full rounded-md px-3 py-2 text-sm border border-gray-300"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Height</label>
+                    <input
+                      type="number"
+                      min={200}
+                      max={2000}
+                      value={newProduct.imageOptions.height}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          imageOptions: {
+                            ...newProduct.imageOptions,
+                            height: Number(e.target.value || 900),
+                          },
+                        })
+                      }
+                      className="w-full rounded-md px-3 py-2 text-sm border border-gray-300"
+                    />
+                  </div>
+                </div>
+
+                <label className="mt-3 inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={newProduct.imageOptions.removeBackground}
+                    onChange={(e) =>
+                      setNewProduct({
+                        ...newProduct,
+                        imageOptions: {
+                          ...newProduct.imageOptions,
+                          removeBackground: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  Remove Background (if supported by provider)
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <label
+                  htmlFor="image"
+                  className="cursor-pointer inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Image
+                </label>
+                <input
+                  type="file"
+                  id="image"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                {newProduct.image && (
+                  <CheckCircle className="text-green-500 h-5 w-5" />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={applyImagePreview}
+                disabled={!newProduct.image || imagePreviewLoading}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-60"
               >
-                <option>Select Category</option>
-                {categories.map((category) => (
-                  <option key={category._id} value={category._id}>
-                    {category.name}
-                  </option>
-                ))}
-                <option value="">None</option>
-              </select>
-            </div>
+                {imagePreviewLoading ? "Applying..." : "Apply Image Settings"}
+              </button>
 
-            {/* Image Upload */}
-            <div>
-              <label
-                htmlFor="image"
-                className="cursor-pointer inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200"
-              >
-                <Upload className="h-4 w-4" />
-                Upload Image
-              </label>
-              <input
-                type="file"
-                id="image"
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              {newProduct.image && (
-                <CheckCircle className="inline ml-2 mb-2 text-green-500 h-5 w-5" />
-              )}
-            </div>
+              <div className="border rounded-lg p-4 bg-slate-50">
+                <p className="text-xs text-gray-500 mb-2">Preview (square card)</p>
+                <div className="w-44 h-44 rounded-md border overflow-hidden bg-white flex items-center justify-center">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Processed preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : newProduct.image ? (
+                    <img
+                      src={newProduct.image}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-gray-400">No image selected</span>
+                  )}
+                </div>
+                {imagePreviewNotice && (
+                  <p className="mt-2 text-xs text-gray-500">{imagePreviewNotice}</p>
+                )}
+              </div>
 
-            {/* Submit */}
-            <div className="sm:col-span-2">
               <button
                 type="submit"
                 className="w-full flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium text-white bg-gray-800 hover:bg-gray-700 shadow"

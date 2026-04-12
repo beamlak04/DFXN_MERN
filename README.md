@@ -11,6 +11,8 @@ DFXN_MERN is a web application built using the MERN stack (MongoDB, Express.js, 
 - **Authentication & Authorization**: Secure user login and access control mechanisms.
 - **Component-Based Architecture**: Modular and reusable code structure for maintainability.
 - **Environment Configuration**: Uses environment variables for secure configuration.
+- **Contact Workflow**: Public contact submission with admin review statuses (`new`, `reviewed`, `closed`).
+- **Email Notifications**: SMTP-based notifications for new contact submissions.
 
 ## Getting Started
 
@@ -42,6 +44,20 @@ DFXN_MERN is a web application built using the MERN stack (MongoDB, Express.js, 
 ### Configuration
 
 - Create a `.env` file in the `server` directory with your MongoDB URI and other environment variables.
+
+Example contact-related variables:
+
+```env
+UPSTASH_REDIS_URL=redis://...
+
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=example-user
+SMTP_PASS=example-pass
+SMTP_FROM=alerts@yourdomain.com
+CONTACT_NOTIFY_TO=support@yourdomain.com
+```
 
 ### Running the Application
 

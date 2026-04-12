@@ -6,6 +6,7 @@ export const useAdminStore = create((set) => ({
     dashboardLoading: false,
     analyticsLoading: false,
     settingsLoading: false,
+    contactMessagesLoading: false,
     dashboardData: {
         summary: {
             totalProducts: 0,
@@ -28,6 +29,17 @@ export const useAdminStore = create((set) => ({
         name: "",
         email: "",
         role: "",
+    },
+    settingsContactNotifications: {
+        emailNotificationsEnabled: true,
+        contactNotifyTo: "",
+    },
+    contactMessages: [],
+    contactMessagesPagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
     },
 
     fetchDashboard: async () => {
@@ -56,7 +68,14 @@ export const useAdminStore = create((set) => ({
         set({ settingsLoading: true });
         try {
             const response = await axios.get("/admin/settings");
-            set({ settingsProfile: response.data.profile, settingsLoading: false });
+            set({
+                settingsProfile: response.data.profile,
+                settingsContactNotifications: response.data.contactNotifications || {
+                    emailNotificationsEnabled: true,
+                    contactNotifyTo: "",
+                },
+                settingsLoading: false,
+            });
         } catch (error) {
             set({ settingsLoading: false });
             toast.error(error.response?.data?.message || "Failed to load settings");
@@ -88,6 +107,68 @@ export const useAdminStore = create((set) => ({
             set({ settingsLoading: false });
             toast.error(error.response?.data?.message || "Failed to update password");
             throw error;
+        }
+    },
+
+    updateContactNotificationSettings: async (payload) => {
+        set({ settingsLoading: true });
+        try {
+            const response = await axios.put("/admin/settings/contact-notifications", payload);
+            set({
+                settingsContactNotifications: response.data.contactNotifications,
+                settingsLoading: false,
+            });
+            toast.success(response.data.message || "Notification settings updated");
+            return response.data;
+        } catch (error) {
+            set({ settingsLoading: false });
+            toast.error(error.response?.data?.message || "Failed to update notification settings");
+            throw error;
+        }
+    },
+
+    fetchContactMessages: async (params = {}) => {
+        set({ contactMessagesLoading: true });
+        try {
+            const query = new URLSearchParams();
+            if (params.page) query.set("page", params.page);
+            if (params.limit) query.set("limit", params.limit);
+            if (params.status && params.status !== "all") query.set("status", params.status);
+            if (params.search) query.set("search", params.search);
+
+            const suffix = query.toString() ? `?${query.toString()}` : "";
+            const response = await axios.get(`/admin/contact-messages${suffix}`);
+            set({
+                contactMessages: response.data.messages || [],
+                contactMessagesPagination: response.data.pagination || {
+                    page: 1,
+                    limit: 20,
+                    total: 0,
+                    totalPages: 1,
+                },
+                contactMessagesLoading: false,
+            });
+        } catch (error) {
+            set({ contactMessagesLoading: false });
+            toast.error(error.response?.data?.message || "Failed to load contact messages");
+        }
+    },
+
+    updateContactMessageStatus: async (messageId, status) => {
+        try {
+            const response = await axios.patch(`/admin/contact-messages/${messageId}/status`, { status });
+            set((state) => ({
+                contactMessages: state.contactMessages.map((message) =>
+                    message._id === messageId
+                        ? { ...message, status }
+                        : message
+                ),
+            }));
+            toast.success(response.data?.message || "Status updated");
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to update message status");
+            return false;
         }
     },
 }));

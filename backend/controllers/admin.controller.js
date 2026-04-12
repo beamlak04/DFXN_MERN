@@ -3,8 +3,23 @@ import cloudinary from "../lib/cloudinary.js";
 import Order from "../models/order.model.js";
 import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
+import SystemSettings from "../models/systemSettings.model.js";
+import { uploadImageWithProcessing } from "../lib/imageUpload.js";
 
 const DASHBOARD_TOP_LIMIT = 5;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getSystemSettings = async () => {
+  let settings = await SystemSettings.findOne({ key: "global" });
+  if (!settings) {
+    settings = await SystemSettings.create({
+      key: "global",
+      emailNotificationsEnabled: true,
+      contactNotifyTo: process.env.CONTACT_NOTIFY_TO || "",
+    });
+  }
+  return settings;
+};
 
 const getTodayRange = () => {
   const start = new Date();
@@ -201,16 +216,53 @@ export const getAnalytics = async (req, res) => {
 
 export const getAdminSettings = async (req, res) => {
   try {
+    const settings = await getSystemSettings();
     res.status(200).json({
       profile: {
         name: req.user.name,
         email: req.user.email,
         role: req.user.role,
       },
+      contactNotifications: {
+        emailNotificationsEnabled: settings.emailNotificationsEnabled,
+        contactNotifyTo: settings.contactNotifyTo || "",
+      },
     });
   } catch (error) {
     console.log("error in getAdminSettings", error.message);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateContactNotificationSettings = async (req, res) => {
+  try {
+    const { emailNotificationsEnabled, contactNotifyTo } = req.body;
+
+    const normalizedAddress = String(contactNotifyTo || "")
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedAddress || !emailPattern.test(normalizedAddress)) {
+      return res.status(400).json({
+        message: "Please provide a valid contact notification email",
+      });
+    }
+
+    const settings = await getSystemSettings();
+    settings.emailNotificationsEnabled = Boolean(emailNotificationsEnabled);
+    settings.contactNotifyTo = normalizedAddress;
+    await settings.save();
+
+    return res.status(200).json({
+      message: "Contact notification settings updated",
+      contactNotifications: {
+        emailNotificationsEnabled: settings.emailNotificationsEnabled,
+        contactNotifyTo: settings.contactNotifyTo,
+      },
+    });
+  } catch (error) {
+    console.log("error in updateContactNotificationSettings", error.message);
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -286,11 +338,14 @@ export const updateAdminPassword = async (req, res) => {
 
 export const createCategory = async (req, res) => {
   try {
-    const { name, description, image } = req.body;
+    const { name, description, image, imageOptions } = req.body;
     let cloudinaryResponse = null;
     if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, {
+      cloudinaryResponse = await uploadImageWithProcessing({
+        image,
         folder: "categories",
+        imageType: "category",
+        imageOptions,
       });
     }
     const category = await Category.create({
@@ -319,7 +374,7 @@ export const getAllCategories = async (req, res) => {
 
 export const editCategory = async (req, res) => {
   try {
-    const { name, description, image } = req.body;
+    const { name, description, image, imageOptions } = req.body;
     const category = await Category.findById(req.params.id);
 
     if (!category) {
@@ -341,8 +396,11 @@ export const editCategory = async (req, res) => {
 
       let cloudinaryResponse;
       try {
-        cloudinaryResponse = await cloudinary.uploader.upload(image, {
+        cloudinaryResponse = await uploadImageWithProcessing({
+          image,
           folder: "categories",
+          imageType: "category",
+          imageOptions,
         });
         category.image = cloudinaryResponse?.secure_url || "";
       } catch (error) {

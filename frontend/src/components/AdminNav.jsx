@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   Users,
   BarChart3,
+  MessageSquare,
   Settings,
   Menu,
   LogOut,
@@ -19,6 +20,7 @@ const NAV = [
   { id: "products", label: "Products", icon: Package, to: "/admin/products" },
   { id: "orders", label: "Orders", icon: ShoppingCart, to: "/admin/orders" },
   { id: "categories", label: "Categories", icon: Users, to: "/admin/categories" },
+  { id: "complaints", label: "Complaints", icon: MessageSquare, to: "/admin/complaints" },
   { id: "analytics", label: "Analytics", icon: BarChart3, to: "/admin/analytics" },
 ];
 

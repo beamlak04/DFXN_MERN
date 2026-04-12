@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useProductStore } from "../stores/useProductStore";
 import { useCategoryStore } from "../stores/useCategoryStore";
+import { useContactStore } from "../stores/useContactStore";
 import Navbar from "../components/Navbar";
 import FooterComponent from "../components/FooterComponent";
 
@@ -21,11 +22,47 @@ const HomePage = () => {
     getAllCategories,
     loading: categoriesLoading,
   } = useCategoryStore();
+  const { submitContactMessage, submitting } = useContactStore();
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    phone: "",
+    message: "",
+    website: "",
+  });
 
   useEffect(() => {
     fetchFeaturedProducts();
     getAllCategories();
   }, [fetchFeaturedProducts, getAllCategories]);
+
+  const handleContactInputChange = (event) => {
+    const { name, value } = event.target;
+    setContactForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleContactSubmit = async (event) => {
+    event.preventDefault();
+    const success = await submitContactMessage({
+      ...contactForm,
+      sourcePage: "home",
+    });
+
+    if (success) {
+      setContactForm({
+        name: "",
+        email: "",
+        subject: "",
+        phone: "",
+        message: "",
+        website: "",
+      });
+    }
+  };
   
   return (
     <div>
@@ -234,26 +271,67 @@ const HomePage = () => {
 
           {/* Right - Contact Form */}
           <div className="flex-1">
-            <form className="bg-slate-100 p-6 rounded-2xl shadow-md">
+            <form className="bg-slate-100 p-6 rounded-2xl shadow-md" onSubmit={handleContactSubmit}>
               <input
                 type="text"
+                name="name"
                 placeholder="Your Name"
+                value={contactForm.name}
+                onChange={handleContactInputChange}
+                required
                 className="w-full p-4 mb-4 rounded-xl border-none focus:ring-2 focus:ring-black"
               />
               <input
                 type="email"
+                name="email"
                 placeholder="Your Email"
+                value={contactForm.email}
+                onChange={handleContactInputChange}
+                required
                 className="w-full p-4 mb-4 rounded-xl border-none focus:ring-2 focus:ring-black"
               />
+              <input
+                type="text"
+                name="subject"
+                placeholder="Subject (Optional)"
+                value={contactForm.subject}
+                onChange={handleContactInputChange}
+                className="w-full p-4 mb-4 rounded-xl border-none focus:ring-2 focus:ring-black"
+              />
+              <input
+                type="text"
+                name="phone"
+                placeholder="Phone (Optional)"
+                value={contactForm.phone}
+                onChange={handleContactInputChange}
+                className="w-full p-4 mb-4 rounded-xl border-none focus:ring-2 focus:ring-black"
+              />
+              <input
+                type="text"
+                name="website"
+                value={contactForm.website}
+                onChange={handleContactInputChange}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+              />
               <textarea
+                name="message"
                 placeholder="Your Message"
+                value={contactForm.message}
+                onChange={handleContactInputChange}
+                required
+                minLength={10}
+                maxLength={2000}
                 className="w-full p-4 mb-4 rounded-xl border-none focus:ring-2 focus:ring-black h-28"
               />
               <button
                 type="submit"
-                className="bg-gray-800 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition w-full"
+                disabled={submitting}
+                className="bg-gray-800 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition w-full disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Send Message
+                {submitting ? "Sending..." : "Send Message"}
               </button>
             </form>
           </div>

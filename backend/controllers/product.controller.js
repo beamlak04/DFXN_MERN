@@ -2,6 +2,7 @@ import Product from "../models/product.model.js";
 import Category from "../models/category.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { redis } from "../lib/redis.js";
+import { uploadImageWithProcessing } from "../lib/imageUpload.js";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -30,11 +31,14 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    let { name, description, price, image, category } = req.body;
+    let { name, description, price, image, category, imageOptions } = req.body;
     let cloudinaryResponse = null;
     if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, {
+      cloudinaryResponse = await uploadImageWithProcessing({
+        image,
         folder: "products",
+        imageType: "product",
+        imageOptions,
       });
     }
     if (category === "None") {
@@ -143,7 +147,7 @@ export const getProduct = async (req, res) => {
 
 export const editProduct = async (req, res) => {
   try {
-    const { name, description, price, stock, category, image } = req.body;
+    const { name, description, price, stock, category, image, imageOptions } = req.body;
 
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -177,8 +181,11 @@ export const editProduct = async (req, res) => {
 
       let cloudinaryResponse;
       try {
-        cloudinaryResponse = await cloudinary.uploader.upload(image, {
+        cloudinaryResponse = await uploadImageWithProcessing({
+          image,
           folder: "products",
+          imageType: "product",
+          imageOptions,
         });
         product.image = cloudinaryResponse?.secure_url || "";
       } catch (error) {
