@@ -13,6 +13,7 @@ import HomePage from "./pages/HomePage";
 import LogInPage from "./pages/LogInPage";
 import Order from "./pages/Order";
 import Orders from "./pages/Orders";
+import PaymentResult from "./pages/PaymentResult";
 import PlaceOrder from "./pages/PlaceOrder";
 import Product from "./pages/Product";
 import Products from "./pages/Products";
@@ -41,6 +42,7 @@ function App() {
         <Route path="/products/:id" element={<Product />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/place-order" element={<PlaceOrder />} />
+        <Route path="/payment-result" element={<PaymentResult />} />
         <Route path="/signup" element={<Navigate to="/admin/login" replace />} />
         <Route path="/signUp" element={<Navigate to="/admin/login" replace />} />
         <Route

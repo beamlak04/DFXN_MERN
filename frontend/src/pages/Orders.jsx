@@ -23,6 +23,16 @@ const Orders = () => {
     getAllOrders();
   }, [getAllOrders]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (orders.some((order) => order.paymentStatus === "pending")) {
+        getAllOrders();
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [getAllOrders, orders]);
+
   // Filter orders by search query
   const filteredOrders = orders.filter((order) => {
     const query = search.toLowerCase();
@@ -106,6 +116,9 @@ const Orders = () => {
                         <span className={`p-1 rounded ${orderStatus[order.orderStatus]}`}>
                           {order.orderStatus}
                         </span>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {order.paymentStatus}
+                        </div>
                       </td>
                       <td className="px-4 py-3">ETB {order.totalAmount}</td>
                       <td className="px-4 py-3 text-center space-x-2">

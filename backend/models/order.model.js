@@ -39,8 +39,24 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["Telebirr", "COD"],
+      enum: ["Telebirr", "Chapa", "COD"],
       default: "COD",
+    },
+    paymentReference: {
+      type: String,
+      default: "",
+    },
+    paymentProvider: {
+      type: String,
+      enum: ["chapa", "none"],
+      default: "none",
+    },
+    paymentUrl: {
+      type: String,
+      default: "",
+    },
+    paidAt: {
+      type: Date,
     },
     orderStatus: {
       type: String,

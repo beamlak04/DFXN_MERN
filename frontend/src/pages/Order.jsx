@@ -29,6 +29,16 @@ const Order = () => {
   }, [getOrderById, id]);
 
   useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (order?.paymentStatus === "pending") {
+        getOrderById(id);
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [getOrderById, id, order?.paymentStatus]);
+
+  useEffect(() => {
     if (order) {
       const formattedOrder = {
         paymentStatus: order.paymentStatus,
@@ -197,6 +207,9 @@ const Order = () => {
                   </option>
                 ))}
               </select>
+              <p className="text-xs text-gray-500 mt-2">
+                Auto-refreshes every 10 seconds while the page is open.
+              </p>
             </div>
             <div>
               <label htmlFor="orderStatus" className="block font-semibold">
@@ -228,6 +241,7 @@ const Order = () => {
                 className="p-2 px-3 w-full rounded-lg"
               >
                 <option value="Telebirr">Telebirr</option>
+                <option value="Chapa">Chapa</option>
                 <option value="COD">Cash on Delivery</option>
               </select>
             </div>

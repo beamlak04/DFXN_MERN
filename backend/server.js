@@ -19,7 +19,12 @@ const allowedOrigins = process.env.CLIENT_URLS
     ? process.env.CLIENT_URLS.split(",").map((origin) => origin.trim()).filter(Boolean)
     : ["http://localhost:5173", "http://192.168.1.11:5173"];
 
-app.use(express.json({limit:"5mb"}));
+app.use(express.json({
+    limit:"5mb",
+    verify: (req, _res, buf) => {
+        req.rawBody = buf.toString("utf8");
+    },
+}));
 app.use(cors({
     origin: allowedOrigins,
     credentials: true,

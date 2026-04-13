@@ -57,7 +57,28 @@ SMTP_USER=example-user
 SMTP_PASS=example-pass
 SMTP_FROM=alerts@yourdomain.com
 CONTACT_NOTIFY_TO=support@yourdomain.com
+
+# Chapa sandbox integration
+CHAPA_SECRET_KEY=CHAPAK_TEST_xxxxxxxxxxxxxxxxxxxxx
+CHAPA_WEBHOOK_SECRET=
+CHAPA_SIGNATURE_HEADER=x-chapa-signature
+CHAPA_WEBHOOK_FIRST=true
+CHAPA_CALLBACK_URL=https://your-public-domain.com/api/orders/payment/callback
+CHAPA_RETURN_URL=http://localhost:5173/payment-result
 ```
+
+### Chapa Sandbox Checkout Test
+
+1. Update root `.env` and set your sandbox Chapa keys.
+2. Start backend and frontend.
+3. Go to checkout (`/place-order`) and choose `Chapa` or `Telebirr`.
+4. Complete sandbox payment from Chapa hosted page.
+5. You will return to `/payment-result` where status is shown.
+
+Note:
+- With `CHAPA_WEBHOOK_FIRST=true`, order payment is confirmed from callback/webhook first.
+- Frontend return flow will show `pending` until callback updates the order.
+- Optional frontend fallback verify can be enabled in `frontend/.env` with `VITE_CHAPA_VERIFY_ON_RETURN=true`.
 
 ### Running the Application
 

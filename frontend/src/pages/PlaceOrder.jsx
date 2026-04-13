@@ -14,6 +14,7 @@ const PlaceOrder = () => {
     email: "",
     address: "",
   });
+  const [paymentMethod, setPaymentMethod] = useState("COD");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
 
@@ -33,9 +34,16 @@ const PlaceOrder = () => {
     e.preventDefault();
 
     if (validatePhoneNumber(phoneNumber)) {
-      const orderData = { customer: customerDetail, cart };
+      const orderData = { customer: customerDetail, cart, paymentMethod };
       if (cart.length > 0) {
-        await placeOrder(orderData);
+        const result = await placeOrder(orderData);
+        if (!result) return;
+
+        if (result.paymentUrl) {
+          window.location.href = result.paymentUrl;
+          return;
+        }
+
         clearCartItems();
       } else {
         toast.error("Cart is empty");
@@ -110,6 +118,24 @@ const PlaceOrder = () => {
             {phoneError && (
               <p className="text-red-500 text-sm mt-1">{phoneError}</p>
             )}
+          </div>
+          <div>
+            <label
+              htmlFor="paymentMethod"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Payment Method
+            </label>
+            <select
+              id="paymentMethod"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none transition duration-150 ease-in-out"
+            >
+              <option value="COD">Cash on Delivery</option>
+              <option value="Chapa">Chapa</option>
+              <option value="Telebirr">Telebirr</option>
+            </select>
           </div>
           <div>
             <label
