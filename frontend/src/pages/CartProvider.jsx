@@ -1,5 +1,5 @@
 // CartContext.js
-import React, { createContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   getCart,
   addToCart,
@@ -8,8 +8,7 @@ import {
   clearCart,
 } from "../stores/useCartStore.js";
 import toast from "react-hot-toast";
-
-export const CartContext = createContext();
+import { CartContext } from "../contexts/CartContext";
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);

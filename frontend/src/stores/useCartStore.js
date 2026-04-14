@@ -46,7 +46,9 @@ export const updateQuantity = (id, quantity) => {
   let cart = getCart();
   const item = cart.find((item) => item._id === id);
   if (item) {
-    item.quantity = quantity;
+    const maxAllowed = Math.max(1, Number(item.stock || 1));
+    const normalizedQuantity = Math.max(1, Math.min(Number(quantity || 1), maxAllowed));
+    item.quantity = normalizedQuantity;
   }
   saveCart(cart);
   return cart;

@@ -5,9 +5,13 @@ import { useAdminStore } from "../stores/useAdminStore";
 const AdminSettings = () => {
   const {
     settingsProfile,
+    settingsPermissions,
     settingsContactNotifications,
+    adminUsers,
     settingsLoading,
     fetchSettings,
+    fetchAdminUsers,
+    createAdminUser,
     updateProfile,
     updatePassword,
     updateContactNotificationSettings,
@@ -23,10 +27,21 @@ const AdminSettings = () => {
     emailNotificationsEnabled: true,
     contactNotifyTo: "",
   });
+  const [adminUserForm, setAdminUserForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  useEffect(() => {
+    if (settingsPermissions.canManageAdmins) {
+      fetchAdminUsers();
+    }
+  }, [settingsPermissions.canManageAdmins, fetchAdminUsers]);
 
   useEffect(() => {
     setProfileForm({
@@ -62,6 +77,14 @@ const AdminSettings = () => {
   const submitNotifications = async (e) => {
     e.preventDefault();
     await updateContactNotificationSettings(notificationForm);
+  };
+
+  const submitAdminUser = async (e) => {
+    e.preventDefault();
+    const created = await createAdminUser(adminUserForm);
+    if (created) {
+      setAdminUserForm({ name: "", email: "", password: "" });
+    }
   };
 
   return (
@@ -220,6 +243,77 @@ const AdminSettings = () => {
               {settingsLoading ? "Saving..." : "Save Notification Settings"}
             </button>
           </form>
+
+          {settingsPermissions.canManageAdmins && (
+            <div className="bg-white rounded-xl shadow p-6 space-y-5 max-w-3xl">
+              <h2 className="text-lg font-semibold">Admin Access Management</h2>
+              <p className="text-sm text-gray-500">
+                Only master users can create additional admin accounts.
+              </p>
+
+              <form onSubmit={submitAdminUser} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  value={adminUserForm.name}
+                  onChange={(e) =>
+                    setAdminUserForm({ ...adminUserForm, name: e.target.value })
+                  }
+                  className="border rounded-md px-3 py-2"
+                  placeholder="Admin name"
+                  required
+                />
+                <input
+                  type="email"
+                  value={adminUserForm.email}
+                  onChange={(e) =>
+                    setAdminUserForm({ ...adminUserForm, email: e.target.value })
+                  }
+                  className="border rounded-md px-3 py-2"
+                  placeholder="admin@example.com"
+                  required
+                />
+                <input
+                  type="password"
+                  value={adminUserForm.password}
+                  onChange={(e) =>
+                    setAdminUserForm({ ...adminUserForm, password: e.target.value })
+                  }
+                  className="border rounded-md px-3 py-2"
+                  placeholder="Temporary password"
+                  minLength={8}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="md:col-span-3 bg-gray-900 text-white px-4 py-2 rounded-md"
+                  disabled={settingsLoading}
+                >
+                  {settingsLoading ? "Creating..." : "Create Admin User"}
+                </button>
+              </form>
+
+              <div className="space-y-2">
+                <h3 className="font-medium">Existing Admin Users</h3>
+                <div className="border rounded-md divide-y">
+                  {adminUsers.length > 0 ? (
+                    adminUsers.map((user) => (
+                      <div key={user._id} className="px-3 py-2 flex items-center justify-between text-sm">
+                        <div>
+                          <p className="font-medium text-gray-800">{user.name}</p>
+                          <p className="text-gray-500">{user.email}</p>
+                        </div>
+                        <span className="uppercase text-xs font-semibold px-2 py-1 rounded bg-gray-100 text-gray-700">
+                          {user.role}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="px-3 py-3 text-sm text-gray-500">No admin users found.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </AdminNav>
     </div>

@@ -30,10 +30,14 @@ export const useAdminStore = create((set) => ({
         email: "",
         role: "",
     },
+    settingsPermissions: {
+        canManageAdmins: false,
+    },
     settingsContactNotifications: {
         emailNotificationsEnabled: true,
         contactNotifyTo: "",
     },
+    adminUsers: [],
     contactMessages: [],
     contactMessagesPagination: {
         page: 1,
@@ -70,6 +74,9 @@ export const useAdminStore = create((set) => ({
             const response = await axios.get("/admin/settings");
             set({
                 settingsProfile: response.data.profile,
+                settingsPermissions: response.data.permissions || {
+                    canManageAdmins: false,
+                },
                 settingsContactNotifications: response.data.contactNotifications || {
                     emailNotificationsEnabled: true,
                     contactNotifyTo: "",
@@ -124,6 +131,34 @@ export const useAdminStore = create((set) => ({
             set({ settingsLoading: false });
             toast.error(error.response?.data?.message || "Failed to update notification settings");
             throw error;
+        }
+    },
+
+    fetchAdminUsers: async () => {
+        set({ settingsLoading: true });
+        try {
+            const response = await axios.get("/admin/settings/admin-users");
+            set({ adminUsers: response.data.users || [], settingsLoading: false });
+        } catch (error) {
+            set({ settingsLoading: false });
+            toast.error(error.response?.data?.message || "Failed to load admin users");
+        }
+    },
+
+    createAdminUser: async (payload) => {
+        set({ settingsLoading: true });
+        try {
+            const response = await axios.post("/admin/settings/admin-users", payload);
+            set((state) => ({
+                adminUsers: [response.data.user, ...state.adminUsers],
+                settingsLoading: false,
+            }));
+            toast.success(response.data.message || "Admin user created");
+            return response.data.user;
+        } catch (error) {
+            set({ settingsLoading: false });
+            toast.error(error.response?.data?.message || "Failed to create admin user");
+            return null;
         }
     },
 

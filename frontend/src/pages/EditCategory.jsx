@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader, SaveIcon, ArrowLeft, Upload, CheckCircle } from "lucide-react";
@@ -96,11 +95,8 @@ const EditCategory = () => {
   }
 
   return (
-    <motion.div
+    <div
         className="rounded-md mx-auto w-11/12 max-w-4xl"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
       >
         <h3 className="text-center text-xl p-5 font-semibold">
           Edit Category {category?.name}
@@ -288,7 +284,7 @@ const EditCategory = () => {
             </button>
           </div>
         </form>
-      </motion.div>
+      </div>
   )
 }
 

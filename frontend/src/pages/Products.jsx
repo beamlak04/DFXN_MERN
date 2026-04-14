@@ -5,7 +5,7 @@ import Navbar from "../components/Navbar";
 import { useProductStore } from "../stores/useProductStore";
 import { useCategoryStore } from "../stores/useCategoryStore";
 import FooterComponent from "../components/FooterComponent";
-import { CartContext } from "./CartProvider";
+import { CartContext } from "../contexts/CartContext";
 
 const Products = () => {
   const navigate = useNavigate();
@@ -160,9 +160,6 @@ const Products = () => {
                       onClick={() => {
                         if (product.stock > 0) {
                           addItem(product);
-                          console.log("Add to cart:", product._id);
-                        } else {
-                          alert("This product is out of stock.");
                         }
                       }}
                       className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-600 text-white text-sm font-medium px-3 py-2 rounded-lg transition"

@@ -29,33 +29,9 @@ const setCookies = (res, refreshToken, accessToken) => {
     })
 }
 export const signup = async (req,res) => {
-    const { email, password, name } = req.body;
-    try{
-        const UserExists = await User.findOne({email});
-
-        if(UserExists){
-            return res.status(400).json({
-                message: "User already exists"
-            })
-        }
-        const user = await User.create({name,email,password});
-
-        const {accessToken, refreshToken} = generateTokens(user._id);
-        await storeRefreshToken(user._id, refreshToken);
-        setCookies(res, refreshToken, accessToken);
-
-
-        res.status(201).json({user:{
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-        }, message: "User created successfully"});
-    }catch(error){
-        res.status(500).json({message: error.message});
-    }      
-    
-    
+    return res.status(403).json({
+        message: "Public signup is disabled. Ask a master user to create admin access.",
+    });
 }
 
 export const login = async (req,res) => {

@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { CartContext } from "./CartProvider";
+import { CartContext } from "../contexts/CartContext";
 import Navbar from "../components/Navbar";
 import { Minus, Plus, Trash2, ScanLine } from "lucide-react"; // icons for elegant controls
 import { Link, useNavigate } from "react-router-dom";

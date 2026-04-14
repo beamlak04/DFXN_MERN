@@ -118,7 +118,7 @@ export default function AdminNav({ children }) {
 function Sidebar({ onSelect }) {
   return (
     <nav className="space-y-1">
-      {NAV.map(({ id, label, icon: Icon, to }) => (
+      {NAV.map(({ id, label, icon, to }) => (
         <NavLink
           key={id}
           to={to}
@@ -132,7 +132,7 @@ function Sidebar({ onSelect }) {
             )
           }
         >
-          <Icon className="h-5 w-5" />
+          {React.createElement(icon, { className: "h-5 w-5" })}
           <span>{label}</span>
         </NavLink>
       ))}

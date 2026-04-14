@@ -34,6 +34,19 @@ const isWebhookFirstEnabled = () => {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const SUCCESS_STATUSES = new Set(["success"]);
+const FAILED_STATUSES = new Set([
+  "failed",
+  "canceled",
+  "cancelled",
+  "declined",
+  "expired",
+  "error",
+  "timeout",
+]);
+
+const normalizeChapaStatus = (status) => String(status || "").trim().toLowerCase();
+
 const getNameParts = (name = "") => {
   const parts = String(name).trim().split(" ").filter(Boolean);
   if (parts.length === 0) {
@@ -176,10 +189,10 @@ export const verifyOrderPayment = async (req, res) => {
     }
 
     const verification = await verifyChapaPayment(txRef);
-    const status = verification?.data?.status;
+    const status = normalizeChapaStatus(verification?.data?.status);
     const amount = Number(verification?.data?.amount || 0);
 
-    if (status === "success" && amount >= order.totalAmount) {
+    if (SUCCESS_STATUSES.has(status) && amount >= order.totalAmount) {
       order.paymentStatus = "paid";
       order.orderStatus = "processing";
       order.paidAt = new Date();
@@ -194,9 +207,25 @@ export const verifyOrderPayment = async (req, res) => {
       });
     }
 
+    if (FAILED_STATUSES.has(status)) {
+      order.paymentStatus = "failed";
+      order.orderStatus = "failed";
+      await order.save();
+
+      return res.status(200).json({
+        message: "Payment failed",
+        paid: false,
+        failed: true,
+        pending: false,
+        order,
+        source: "chapa",
+      });
+    }
+
     return res.status(200).json({
       message: "Payment is still pending confirmation",
       paid: false,
+      failed: false,
       pending: true,
       order,
       source: "chapa",
@@ -263,14 +292,14 @@ export const chapaPaymentCallback = async (req, res) => {
     }
 
     const verification = await verifyChapaPayment(txRef);
-    const status = verification?.data?.status;
+    const status = normalizeChapaStatus(verification?.data?.status);
     const amount = Number(verification?.data?.amount || 0);
 
-    if (status === "success" && amount >= order.totalAmount) {
+    if (SUCCESS_STATUSES.has(status) && amount >= order.totalAmount) {
       order.paymentStatus = "paid";
       order.orderStatus = "processing";
       order.paidAt = new Date();
-    } else {
+    } else if (FAILED_STATUSES.has(status)) {
       order.paymentStatus = "failed";
       order.orderStatus = "failed";
     }

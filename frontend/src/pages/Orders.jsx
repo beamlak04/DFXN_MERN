@@ -15,7 +15,7 @@ const orderStatus = {
 };
 
 const Orders = () => {
-  const { orders, loading, getAllOrders, deleteOrder } = useOrderStore();
+  const { orders, getAllOrders, deleteOrder } = useOrderStore();
   const [search, setSearch] = useState("");
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const navigate = useNavigate();

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AdminNav from "../components/AdminNav";
 import { useCategoryStore } from "../stores/useCategoryStore";
-import { HashLink } from "react-router-hash-link";
 import { Link } from "react-router-dom";
 import {
   Upload,
@@ -91,7 +90,7 @@ const AdminCategory = () => {
           removeBackground: false,
         },
       });
-    } catch (error) {
+    } catch {
       // Errors are surfaced via store toasts.
     }
   };
@@ -103,13 +102,17 @@ const AdminCategory = () => {
         <div className="rounded border shadow-sm">
           <div className="px-4 py-3 border-b flex items-center justify-between">
             <h3 className="font-medium">Categories</h3>
-            <HashLink
-              smooth
-              to="#createCategory"
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById("createCategory")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
               className="text-sm px-3 py-1.5 rounded-xl bg-gray-900 text-white"
             >
               Add
-            </HashLink>
+            </button>
           </div>
 
           {/* Table for desktop */}

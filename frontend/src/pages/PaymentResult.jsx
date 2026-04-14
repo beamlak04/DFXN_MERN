@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { CartContext } from "./CartProvider";
+import { CartContext } from "../contexts/CartContext";
 import { useOrderStore } from "../stores/useOrderStore";
 import { Loader } from "lucide-react";
 
@@ -10,7 +10,7 @@ const PaymentResult = () => {
   const [searchParams] = useSearchParams();
   const txRef = searchParams.get("tx_ref");
   const status = searchParams.get("status");
-  const shouldVerifyOnReturn = import.meta.env.F_CHAPA_VERIFY_ON_RETURN === "true";
+  const shouldVerifyOnReturn = import.meta.env.VITE_CHAPA_VERIFY_ON_RETURN === "true";
 
   const { clearCartItems } = useContext(CartContext);
   const { getPaymentResult, verifyPayment } = useOrderStore();
@@ -29,17 +29,22 @@ const PaymentResult = () => {
 
     const run = async () => {
       if (isReturnSuccess) {
-        setResult({ paid: true, pending: false, failed: false, message: "Payment successful" });
+        const confirmed = await verifyPayment(txRef);
+        if (confirmed?.paid) {
+          clearCartItems();
+          setResult(confirmed);
+        } else {
+          setResult(
+            confirmed || {
+              paid: false,
+              failed: true,
+              pending: false,
+              message: "Payment could not be confirmed",
+            }
+          );
+        }
 
         setIsResolving(false);
-
-        void (async () => {
-          const confirmed = await verifyPayment(txRef);
-          if (confirmed?.paid) {
-            clearCartItems();
-            setResult(confirmed);
-          }
-        })();
 
         return;
       }

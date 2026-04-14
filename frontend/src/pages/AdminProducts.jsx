@@ -8,7 +8,6 @@ import {
   Loader,
   CheckCircle,
 } from "lucide-react";
-import { HashLink } from "react-router-hash-link";
 import { Link } from "react-router-dom";
 import { useProductStore } from "../stores/useProductStore";
 import AdminNav from "../components/AdminNav";
@@ -111,7 +110,7 @@ const AdminProducts = () => {
           removeBackground: false,
         },
       });
-    } catch (error) {
+    } catch {
       // Errors are surfaced via store toasts.
     }
   };
@@ -131,13 +130,17 @@ const AdminProducts = () => {
                 onChange={(e) => setSearch(e.target.value)}
                 className="px-3 py-2 border rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-gray-800"
               />
-              <HashLink
-                smooth
-                to="#createProduct"
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("createProduct")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
                 className="text-sm px-3 py-2 rounded-lg bg-gray-900 text-white text-center"
               >
                 Add
-              </HashLink>
+              </button>
             </div>
           </div>
 

@@ -30,10 +30,18 @@ export const protectRoute = async (req, res, next)=>{
 
 
 export const adminRoute = (req, res, next)=>{
-    if(req.user &&req.user.role === "admin"){
+    if(req.user && ["admin", "master"].includes(req.user.role)){
         next();
     }else{
         return res.status(403).json({message: "Access denied - Admins only"});
+    }
+}
+
+export const masterRoute = (req, res, next) => {
+    if (req.user && req.user.role === "master") {
+        next();
+    } else {
+        return res.status(403).json({ message: "Access denied - Master only" });
     }
 }
 

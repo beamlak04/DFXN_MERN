@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useProductStore } from "../stores/useProductStore";
 import { useParams, useNavigate } from "react-router-dom";
@@ -114,11 +113,8 @@ const EditProductPage = () => {
 
   return (
     <div>
-      <motion.div
+      <div
         className="rounded-md mx-auto w-11/12 max-w-5xl"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
       >
         <h3 className="text-center text-xl p-5 font-semibold">
           Edit Product {product?.name}
@@ -349,7 +345,7 @@ const EditProductPage = () => {
             </button>
           </div>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 };

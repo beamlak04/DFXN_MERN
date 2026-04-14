@@ -223,6 +223,9 @@ export const getAdminSettings = async (req, res) => {
         email: req.user.email,
         role: req.user.role,
       },
+      permissions: {
+        canManageAdmins: req.user.role === "master",
+      },
       contactNotifications: {
         emailNotificationsEnabled: settings.emailNotificationsEnabled,
         contactNotifyTo: settings.contactNotifyTo || "",
@@ -332,6 +335,77 @@ export const updateAdminPassword = async (req, res) => {
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.log("error in updateAdminPassword", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAdminUsers = async (_req, res) => {
+  try {
+    const adminUsers = await User.find({ role: { $in: ["admin", "master"] } })
+      .select("name email role createdAt updatedAt")
+      .sort({ role: -1, createdAt: -1 })
+      .lean();
+
+    res.status(200).json({ users: adminUsers });
+  } catch (error) {
+    console.log("error in getAdminUsers", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createAdminUser = async (req, res) => {
+  try {
+    const { name, email, password, role = "admin" } = req.body;
+
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Name, email, and password are required" });
+    }
+
+    if (!emailPattern.test(String(email).trim().toLowerCase())) {
+      return res.status(400).json({ message: "Please provide a valid email" });
+    }
+
+    if (String(password).length < 8) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 8 characters" });
+    }
+
+    if (role !== "admin") {
+      return res
+        .status(400)
+        .json({ message: "Master can only create admin users" });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existingUser = await User.findOne({ email: normalizedEmail }).select("_id");
+
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    const createdUser = await User.create({
+      name: String(name).trim(),
+      email: normalizedEmail,
+      password: String(password),
+      role: "admin",
+    });
+
+    res.status(201).json({
+      message: "Admin user created successfully",
+      user: {
+        _id: createdUser._id,
+        name: createdUser.name,
+        email: createdUser.email,
+        role: createdUser.role,
+        createdAt: createdUser.createdAt,
+        updatedAt: createdUser.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.log("error in createAdminUser", error.message);
     res.status(500).json({ message: error.message });
   }
 };

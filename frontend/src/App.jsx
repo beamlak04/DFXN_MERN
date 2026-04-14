@@ -26,7 +26,7 @@ import AdminContactMessages from "./pages/AdminContactMessages";
 
 function App() {
   const { user, checkAuth, checkingAuth } = useUserStore();
-  const admin = user?.role === "admin";
+  const admin = ["admin", "master"].includes(user?.role);
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);

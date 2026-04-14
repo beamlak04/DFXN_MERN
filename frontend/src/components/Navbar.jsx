@@ -1,5 +1,5 @@
 "use client";
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import {
   ShoppingCart,
   LogOut,
@@ -10,29 +10,29 @@ import {
 import { Link } from "react-router-dom";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { useUserStore } from "../stores/useUserStore";
-import { HashLink } from "react-router-hash-link";
-import { CartContext } from "../pages/CartProvider";
+import { CartContext } from "../contexts/CartContext";
 
 
 
 const Navbar = ({page}) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
-  const admin = user?.role === "admin";
+  const admin = ["admin", "master"].includes(user?.role);
   const {cart} = useContext(CartContext);
+  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + (item.quantity || 0), 0), [cart]);
 
   const NavLinks = () => (
     <>
-      <Link to="/" className={page === "home"? "font-semibold text-gray-800" : "text-gray-700 hover:text-gray-600"}>
+      <Link to="/" className={page === "home"? "font-semibold text-gray-800" : "text-gray-700 hover:text-gray-600"} onClick={() => setMobileMenuOpen(false)}>
         Home
       </Link>
-      <HashLink smooth to="#About" className="text-gray-800 hover:text-gray-600">
+      <Link to="/#About" className="text-gray-800 hover:text-gray-600" onClick={() => setMobileMenuOpen(false)}>
         About
-      </HashLink>
-      <HashLink smooth to="#Contact" className="text-gray-800 hover:text-gray-600">
+      </Link>
+      <Link to="/#Contact" className="text-gray-800 hover:text-gray-600" onClick={() => setMobileMenuOpen(false)}>
         Contact
-      </HashLink>
-      <Link to="/products" className={page === "products"? "font-semibold text-gray-800" : "text-gray-700 hover:text-gray-600"}>Products</Link>
+      </Link>
+      <Link to="/products" className={page === "products"? "font-semibold text-gray-800" : "text-gray-700 hover:text-gray-600"} onClick={() => setMobileMenuOpen(false)}>Products</Link>
     </>
   );
 
@@ -79,8 +79,8 @@ const Navbar = ({page}) => {
 
           <Link to="/cart" className="relative flex gap-2 items-center active:scale-95 rounded-md hover:text-gray-800">
             <ShoppingCart />
-            {cart && <span className="absolute -top-3 -left-2 bg-gray-800 text-white rounded-full py-0.5 px-2 text-xs">
-              {cart.length}
+            {cartCount > 0 && <span className="absolute -top-3 -left-2 bg-gray-800 text-white rounded-full py-0.5 px-2 text-xs">
+              {cartCount}
             </span>}
           </Link>
 

@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import Navbar from "../components/Navbar";
-import { CartContext } from "./CartProvider";
+import { CartContext } from "../contexts/CartContext";
 import { useOrderStore } from "../stores/useOrderStore";
 import { Loader } from "lucide-react";
 import toast from "react-hot-toast";

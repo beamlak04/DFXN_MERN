@@ -213,7 +213,7 @@ const HomePage = () => {
           {/* Comfort and performance */}
           <div className="flex flex-col items-center">
             <img
-              src="comfort.png" // replace with your local image path
+              src="/comfort.png" // replace with your local image path
               alt="Comfort and performance"
               className="w-24 h-24 sm:w-28 sm:h-28 object-contain mb-6"
             />
@@ -225,7 +225,7 @@ const HomePage = () => {
           {/* Fast and free shipping */}
           <div className="flex flex-col items-center">
             <img
-              src="delivery.png" // replace with your local image path
+              src="/delivery.png" // replace with your local image path
               alt="Fast and free shipping"
               className="w-24 h-24 sm:w-28 sm:h-28 object-contain mb-6"
             />

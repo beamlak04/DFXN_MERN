@@ -1,7 +1,6 @@
 import React from "react";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Home, Mail, Lock, Loader } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -26,24 +25,16 @@ const LogInPage = () => {
         <Home />
         Back to Home page
       </Link>
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
+      <div>
         <h2 className="text-center font-bold text-gray-800 text-2xl my-3">
           Admin Login
         </h2>
         <p className="text-center text-sm text-gray-600">
           Authorized administrators only
         </p>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
+      <div>
         <div className="mt-3">
           <form
             onSubmit={handleSubmit}
@@ -110,7 +101,7 @@ const LogInPage = () => {
             </div>
           </form>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

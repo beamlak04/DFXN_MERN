@@ -4,7 +4,7 @@ import { ShoppingCart, ArrowLeft } from "lucide-react";
 import Navbar from "../components/Navbar";
 import { useProductStore } from "../stores/useProductStore";
 import FooterComponent from "../components/FooterComponent";
-import { CartContext } from "./CartProvider";
+import { CartContext } from "../contexts/CartContext";
 
 const Product = () => {
   const { id } = useParams();
@@ -92,7 +92,7 @@ const Product = () => {
 
             {/* Add to Cart Button */}
             <button
-              onClick={() => {addItem(product);console.log("Add to cart:", product._id)}}
+              onClick={() => addItem(product)}
               disabled={product.stock === 0}
               className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-lg font-medium px-5 py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -135,8 +135,7 @@ const Product = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        addItem(rp)
-                        console.log("Add to cart:", rp._id);
+                        addItem(rp);
                       }}
                       className="flex items-center gap-1 bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-sm"
                     >

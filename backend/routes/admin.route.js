@@ -1,6 +1,6 @@
 import express from "express";
 
-import { protectRoute,adminRoute } from "../middleware/auth.middleware.js";
+import { protectRoute, adminRoute, masterRoute } from "../middleware/auth.middleware.js";
 import {
 	getAllCategories,
 	createCategory,
@@ -13,6 +13,8 @@ import {
 	updateAdminProfile,
 	updateAdminPassword,
 	updateContactNotificationSettings,
+	getAdminUsers,
+	createAdminUser,
 } from "../controllers/admin.controller.js";
 import { deleteOrder, editOrder, getAllOrders, getOrderById } from "../controllers/order.controller.js";
 import { getContactMessages, updateContactMessageStatus } from "../controllers/contact.controller.js";
@@ -24,6 +26,8 @@ router.get("/settings", protectRoute, adminRoute, getAdminSettings)
 router.put("/settings/profile", protectRoute, adminRoute, updateAdminProfile)
 router.put("/settings/password", protectRoute, adminRoute, updateAdminPassword)
 router.put("/settings/contact-notifications", protectRoute, adminRoute, updateContactNotificationSettings)
+router.get("/settings/admin-users", protectRoute, masterRoute, getAdminUsers)
+router.post("/settings/admin-users", protectRoute, masterRoute, createAdminUser)
 router.get("/orders/:id", protectRoute, adminRoute, getOrderById);
 router.put("/orders/:id", protectRoute, adminRoute, editOrder)
 router.post("/orders/:id", protectRoute, adminRoute, editOrder)
