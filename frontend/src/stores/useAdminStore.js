@@ -37,6 +37,34 @@ export const useAdminStore = create((set) => ({
         emailNotificationsEnabled: true,
         contactNotifyTo: "",
     },
+    monitoringLoading: false,
+    monitoringData: {
+        summary: {
+            masterUsers: 0,
+            totalEvents: 0,
+            successEvents: 0,
+            failureEvents: 0,
+            uptimeSeconds: 0,
+            databaseStatus: "disconnected",
+            cacheStatus: "unavailable",
+            heapUsedMb: 0,
+            rssMb: 0,
+        },
+        filteredSummary: {
+            totalEvents: 0,
+            page: 1,
+            limit: 10,
+        },
+        pagination: {
+            page: 1,
+            limit: 10,
+            total: 0,
+            totalPages: 1,
+        },
+        routeBreakdown: [],
+        actorBreakdown: [],
+        recentEvents: [],
+    },
     adminUsers: [],
     contactMessages: [],
     contactMessagesPagination: {
@@ -159,6 +187,27 @@ export const useAdminStore = create((set) => ({
             set({ settingsLoading: false });
             toast.error(error.response?.data?.message || "Failed to create admin user");
             return null;
+        }
+    },
+
+    fetchMonitoring: async (params = {}) => {
+        set({ monitoringLoading: true });
+        try {
+            const query = new URLSearchParams();
+            if (params.page) query.set("page", params.page);
+            if (params.limit) query.set("limit", params.limit);
+            if (params.status && params.status !== "all") query.set("status", params.status);
+            if (params.action) query.set("action", params.action);
+            if (params.route) query.set("route", params.route);
+            if (params.actorRole && params.actorRole !== "all") query.set("actorRole", params.actorRole);
+            if (params.search) query.set("search", params.search);
+
+            const suffix = query.toString() ? `?${query.toString()}` : "";
+            const response = await axios.get(`/admin/monitoring${suffix}`);
+            set({ monitoringData: response.data, monitoringLoading: false });
+        } catch (error) {
+            set({ monitoringLoading: false });
+            toast.error(error.response?.data?.message || "Failed to load monitoring data");
         }
     },
 

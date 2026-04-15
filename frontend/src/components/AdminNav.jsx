@@ -7,6 +7,7 @@ import {
   Users,
   BarChart3,
   MessageSquare,
+  Activity,
   Settings,
   Menu,
   LogOut,
@@ -22,6 +23,7 @@ const NAV = [
   { id: "categories", label: "Categories", icon: Users, to: "/admin/categories" },
   { id: "complaints", label: "Complaints", icon: MessageSquare, to: "/admin/complaints" },
   { id: "analytics", label: "Analytics", icon: BarChart3, to: "/admin/analytics" },
+  { id: "monitoring", label: "Monitoring", icon: Activity, to: "/admin/monitoring" },
 ];
 
 export default function AdminNav({ children }) {
@@ -32,6 +34,9 @@ export default function AdminNav({ children }) {
 
   // const Title = NAV.find((n) => (n.to === location.pathname)?.label) || "Admin";
   const Title =
+    location.pathname.includes("/admin/monitoring")
+      ? "Monitoring"
+      :
     location.pathname.includes("/admin/settings")
       ? "Settings"
       : NAV.find((n) => location.pathname.includes(n.to))?.label || "Admin";

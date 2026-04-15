@@ -1,6 +1,7 @@
 import { redis } from "../lib/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { recordAuditEvent } from "../lib/auditLogger.js";
 
 const generateTokens = (userId) => {
     const accessToken = jwt.sign({userId}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "15m"});
@@ -43,6 +44,15 @@ export const login = async (req,res) => {
             const {accessToken, refreshToken} = generateTokens(user._id);
             await storeRefreshToken(user._id, refreshToken);
             setCookies(res, refreshToken, accessToken);
+            await recordAuditEvent({
+                user,
+                req,
+                action: "auth.login",
+                resource: "auth/login",
+                metadata: {
+                    email: user.email,
+                },
+            });
             res.status(200).json({user:{
                 _id: user._id,
                 name: user.name,
@@ -60,9 +70,20 @@ export const login = async (req,res) => {
 export const logout = async (req,res) => {
     try {
         const refreshToken = req.cookies.refreshToken;
+        let user = null;
         if(refreshToken){
             const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
             await redis.del(`refresh_token:${decoded.userId}`);
+            user = await User.findById(decoded.userId).select("name email role").lean();
+        }
+
+        if (user) {
+            await recordAuditEvent({
+                user,
+                req,
+                action: "auth.logout",
+                resource: "auth/logout",
+            });
         }
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");

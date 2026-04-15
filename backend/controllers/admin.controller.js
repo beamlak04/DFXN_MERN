@@ -5,6 +5,7 @@ import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 import SystemSettings from "../models/systemSettings.model.js";
 import { uploadImageWithProcessing } from "../lib/imageUpload.js";
+import { buildMonitoringOverview, recordAuditEvent } from "../lib/auditLogger.js";
 
 const DASHBOARD_TOP_LIMIT = 5;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -237,6 +238,16 @@ export const getAdminSettings = async (req, res) => {
   }
 };
 
+export const getAdminMonitoring = async (req, res) => {
+  try {
+    const overview = await buildMonitoringOverview(req.query);
+    return res.status(200).json(overview);
+  } catch (error) {
+    console.log("error in getAdminMonitoring", error.message);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export const updateContactNotificationSettings = async (req, res) => {
   try {
     const { emailNotificationsEnabled, contactNotifyTo } = req.body;
@@ -255,6 +266,17 @@ export const updateContactNotificationSettings = async (req, res) => {
     settings.emailNotificationsEnabled = Boolean(emailNotificationsEnabled);
     settings.contactNotifyTo = normalizedAddress;
     await settings.save();
+
+    await recordAuditEvent({
+      user: req.user,
+      req,
+      action: "admin.contact-notifications.updated",
+      resource: "admin/settings/contact-notifications",
+      metadata: {
+        emailNotificationsEnabled: settings.emailNotificationsEnabled,
+        contactNotifyTo: settings.contactNotifyTo,
+      },
+    });
 
     return res.status(200).json({
       message: "Contact notification settings updated",
@@ -289,6 +311,16 @@ export const updateAdminProfile = async (req, res) => {
       { name: name.trim(), email: email.trim().toLowerCase() },
       { new: true, runValidators: true }
     ).select("-password");
+
+    await recordAuditEvent({
+      user: updatedUser,
+      req,
+      action: "admin.profile.updated",
+      resource: "admin/settings/profile",
+      metadata: {
+        email: updatedUser.email,
+      },
+    });
 
     res.status(200).json({
       message: "Profile updated successfully",
@@ -332,6 +364,13 @@ export const updateAdminPassword = async (req, res) => {
     user.password = newPassword;
     await user.save();
 
+    await recordAuditEvent({
+      user: req.user,
+      req,
+      action: "admin.password.updated",
+      resource: "admin/settings/password",
+    });
+
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.log("error in updateAdminPassword", error.message);
@@ -345,6 +384,16 @@ export const getAdminUsers = async (_req, res) => {
       .select("name email role createdAt updatedAt")
       .sort({ role: -1, createdAt: -1 })
       .lean();
+
+    await recordAuditEvent({
+      user: _req.user,
+      req: _req,
+      action: "admin.users.viewed",
+      resource: "admin/settings/admin-users",
+      metadata: {
+        resultCount: adminUsers.length,
+      },
+    });
 
     res.status(200).json({ users: adminUsers });
   } catch (error) {
@@ -391,6 +440,17 @@ export const createAdminUser = async (req, res) => {
       email: normalizedEmail,
       password: String(password),
       role: "admin",
+    });
+
+    await recordAuditEvent({
+      user: req.user,
+      req,
+      action: "admin.user.created",
+      resource: "admin/settings/admin-users",
+      metadata: {
+        createdUserId: createdUser._id,
+        createdUserEmail: createdUser.email,
+      },
     });
 
     res.status(201).json({

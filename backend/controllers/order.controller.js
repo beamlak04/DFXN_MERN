@@ -4,6 +4,7 @@ import {
   validateChapaCallbackSignature,
   verifyChapaPayment,
 } from "../lib/chapa.js";
+import { recordAuditEvent } from "../lib/auditLogger.js";
 
 const buildCallbackUrl = (req) => {
   if (process.env.CHAPA_CALLBACK_URL) {
@@ -100,6 +101,24 @@ export const placeOrder = async (req, res) => {
     }
 
     const order = await Order.create(orderPayload);
+
+    await recordAuditEvent({
+      user: {
+        _id: null,
+        name: orderData?.customer?.name || "Guest",
+        email: orderData?.customer?.email || "",
+        role: "customer",
+      },
+      req,
+      action: "order.created",
+      resource: "orders/place-order",
+      metadata: {
+        orderId: order._id,
+        paymentMethod,
+        paymentProvider,
+        totalAmount,
+      },
+    });
 
     if (paymentMethod === "COD") {
       return res.status(201).json({ order, message: "order placed successfully" });
@@ -305,6 +324,24 @@ export const chapaPaymentCallback = async (req, res) => {
     }
 
     await order.save();
+
+    await recordAuditEvent({
+      user: {
+        _id: order.customer?._id || null,
+        name: order.customer?.name || "Customer",
+        email: order.customer?.email || "",
+        role: "customer",
+      },
+      req,
+      action: "order.payment.callback",
+      resource: "orders/payment/callback",
+      metadata: {
+        orderId: order._id,
+        paymentStatus: order.paymentStatus,
+        orderStatus: order.orderStatus,
+      },
+    });
+
     return res.status(200).json({ message: "Callback processed" });
   } catch (error) {
     console.log("error in chapaPaymentCallback", error.message);

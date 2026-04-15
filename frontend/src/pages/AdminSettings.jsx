@@ -312,6 +312,7 @@ const AdminSettings = () => {
                   )}
                 </div>
               </div>
+
             </div>
           )}
         </div>

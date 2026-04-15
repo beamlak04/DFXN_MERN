@@ -21,6 +21,7 @@ import AdminProducts from "./pages/AdminProducts";
 import { useUserStore } from "./stores/useUserStore";
 import AdminCategory from "./pages/AdminCategory";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminMonitoring from "./pages/AdminMonitoring";
 import AdminSettings from "./pages/AdminSettings";
 import AdminContactMessages from "./pages/AdminContactMessages";
 
@@ -69,6 +70,10 @@ function App() {
         <Route
           path="/admin/analytics"
           element={!admin ? <Navigate to="/admin/login" /> : <Analytics />}
+        />
+        <Route
+          path="/admin/monitoring"
+          element={!admin ? <Navigate to="/admin/login" /> : <AdminMonitoring />}
         />
         <Route
           path="/admin/categories"
