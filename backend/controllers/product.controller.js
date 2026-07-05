@@ -3,14 +3,15 @@ import Category from "../models/category.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { redis } from "../lib/redis.js";
 import { uploadImageWithProcessing } from "../lib/imageUpload.js";
+import logger from "../lib/logger.js";
 
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find({});
     res.json({ products });
   } catch (error) {
-    console.log("erron in getallProducts", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getAllProducts");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -24,8 +25,8 @@ export const getFeaturedProducts = async (req, res) => {
     await redis.set("featured_products", JSON.stringify(featuredProducts));
     res.json(featuredProducts);
   } catch (error) {
-    console.log("error in getFeaturedProducts", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getFeaturedProducts");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -58,8 +59,10 @@ export const createProduct = async (req, res) => {
 
     res.status(201).json({ product });
   } catch (error) {
-    console.log("error in createProduct", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in createProduct");
+    return res.status(error.statusCode || 500).json({
+      message: error.statusCode ? error.message : "Something went wrong. Please try again.",
+    });
   }
 };
 
@@ -85,8 +88,8 @@ export const deleteProduct = async (req, res) => {
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
-    console.log("error in deleteProduct", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in deleteProduct");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -100,8 +103,8 @@ export const getProductsByCategory = async (req, res) => {
     const products = await Product.find({ category: category._id });
     res.json({ products });
   } catch (error) {
-    console.log("error in getProductsByCategory", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getProductsByCategory");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -117,8 +120,8 @@ export const toggleFeaturedProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
   } catch (error) {
-    console.log("error in toggleFeaturedProduct", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in toggleFeaturedProduct");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -140,8 +143,8 @@ export const getProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
   } catch (error) {
-    console.log("error in getProduct:", error.message);
-    return res.status(500).json({ message: "Server error: " + error.message });
+    logger.error({ err: error }, "error in getProduct");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -190,7 +193,9 @@ export const editProduct = async (req, res) => {
         product.image = cloudinaryResponse?.secure_url || "";
       } catch (error) {
         console.log("Error uploading new image:", error.message);
-        return res.status(500).json({ message: "Image upload failed" });
+        return res.status(error.statusCode || 500).json({
+          message: error.statusCode ? error.message : "Image upload failed",
+        });
       }
     }
 
@@ -204,7 +209,9 @@ export const editProduct = async (req, res) => {
       product,
     });
   } catch (error) {
-    console.error("Error editing product:", error.message);
-    return res.status(500).json({ message: "Server error: " + error.message });
+    logger.error({ err: error }, "error in editProduct");
+    return res.status(error.statusCode || 500).json({
+      message: error.statusCode ? error.message : "Something went wrong. Please try again.",
+    });
   }
 };

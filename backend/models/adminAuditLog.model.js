@@ -1,5 +1,11 @@
 import mongoose from "mongoose";
 
+const retentionDays = Math.max(
+  Number(process.env.ADMIN_AUDIT_LOG_RETENTION_DAYS) || 365,
+  1
+);
+const retentionSeconds = Math.round(retentionDays * 24 * 60 * 60);
+
 const adminAuditLogSchema = new mongoose.Schema(
   {
     actor: {
@@ -72,6 +78,7 @@ const adminAuditLogSchema = new mongoose.Schema(
 );
 
 adminAuditLogSchema.index({ createdAt: -1 });
+adminAuditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: retentionSeconds });
 adminAuditLogSchema.index({ "actor.userId": 1, createdAt: -1 });
 
 const AdminAuditLog = mongoose.model("AdminAuditLog", adminAuditLogSchema);

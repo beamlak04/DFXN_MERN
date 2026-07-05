@@ -6,6 +6,7 @@ import User from "../models/user.model.js";
 import SystemSettings from "../models/systemSettings.model.js";
 import { uploadImageWithProcessing } from "../lib/imageUpload.js";
 import { buildMonitoringOverview, recordAuditEvent } from "../lib/auditLogger.js";
+import logger from "../lib/logger.js";
 
 const DASHBOARD_TOP_LIMIT = 5;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -103,8 +104,8 @@ export const adminInfo = async (req, res) => {
       recentOrders,
     });
   } catch (error) {
-    console.log("error in adminInfo", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in adminInfo");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -210,8 +211,8 @@ export const getAnalytics = async (req, res) => {
       categoryPerformance,
     });
   } catch (error) {
-    console.log("error in getAnalytics", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getAnalytics");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -233,8 +234,8 @@ export const getAdminSettings = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("error in getAdminSettings", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getAdminSettings");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -243,8 +244,8 @@ export const getAdminMonitoring = async (req, res) => {
     const overview = await buildMonitoringOverview(req.query);
     return res.status(200).json(overview);
   } catch (error) {
-    console.log("error in getAdminMonitoring", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getAdminMonitoring");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -286,8 +287,8 @@ export const updateContactNotificationSettings = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("error in updateContactNotificationSettings", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in updateContactNotificationSettings");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -332,8 +333,8 @@ export const updateAdminProfile = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
-    console.log("error in updateAdminProfile", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in updateAdminProfile");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -345,10 +346,10 @@ export const updateAdminPassword = async (req, res) => {
         .status(400)
         .json({ message: "Current and new password are required" });
     }
-    if (newPassword.length < 6) {
+    if (newPassword.length < 10) {
       return res
         .status(400)
-        .json({ message: "New password must be at least 6 characters" });
+        .json({ message: "New password must be at least 10 characters" });
     }
 
     const user = await User.findById(req.user._id);
@@ -373,8 +374,8 @@ export const updateAdminPassword = async (req, res) => {
 
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
-    console.log("error in updateAdminPassword", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in updateAdminPassword");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -397,8 +398,8 @@ export const getAdminUsers = async (_req, res) => {
 
     res.status(200).json({ users: adminUsers });
   } catch (error) {
-    console.log("error in getAdminUsers", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getAdminUsers");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -416,10 +417,10 @@ export const createAdminUser = async (req, res) => {
       return res.status(400).json({ message: "Please provide a valid email" });
     }
 
-    if (String(password).length < 8) {
+    if (String(password).length < 10) {
       return res
         .status(400)
-        .json({ message: "Password must be at least 8 characters" });
+        .json({ message: "Password must be at least 10 characters" });
     }
 
     if (role !== "admin") {
@@ -465,8 +466,8 @@ export const createAdminUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("error in createAdminUser", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in createAdminUser");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -491,8 +492,10 @@ export const createCategory = async (req, res) => {
     });
     res.status(201).json({ category });
   } catch (error) {
-    console.log("error in admin categories", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in createCategory");
+    return res.status(error.statusCode || 500).json({
+      message: error.statusCode ? error.message : "Something went wrong. Please try again.",
+    });
   }
 };
 
@@ -501,8 +504,8 @@ export const getAllCategories = async (req, res) => {
     const categories = await Category.find({});
     res.json({ categories });
   } catch (error) {
-    console.log("error in get categories", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getAllCategories");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -539,7 +542,9 @@ export const editCategory = async (req, res) => {
         category.image = cloudinaryResponse?.secure_url || "";
       } catch (error) {
         console.log("Error uploading new image:", error.message);
-        return res.status(500).json({ message: "Image upload failed" });
+        return res.status(error.statusCode || 500).json({
+          message: error.statusCode ? error.message : "Image upload failed",
+        });
       }
     }
     await category.save();
@@ -548,8 +553,10 @@ export const editCategory = async (req, res) => {
       message: "Category updated successfully",
     });
   } catch (error) {
-    console.error("Error editing category:", error.message);
-    return res.status(500).json({ message: "Server error: " + error.message });
+    logger.error({ err: error }, "error in editCategory");
+    return res.status(error.statusCode || 500).json({
+      message: error.statusCode ? error.message : "Something went wrong. Please try again.",
+    });
   }
 };
 
@@ -562,8 +569,8 @@ export const getCategoryById = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
   } catch (error) {
-    console.log("error getting product: ", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getCategoryById");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -585,7 +592,7 @@ export const deleteCategory = async (req, res) => {
     await Category.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Category deleted Successfully" });
   } catch (error) {
-    console.log("error delete category: ", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in deleteCategory");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };

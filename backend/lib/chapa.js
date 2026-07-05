@@ -61,19 +61,44 @@ export const verifyChapaPayment = async (txRef) => {
 
 export const validateChapaCallbackSignature = ({ rawBody, signature }) => {
 	const webhookSecret = process.env.CHAPA_WEBHOOK_SECRET;
+	// Enforce webhook secret presence — do not silently accept callbacks when
+	// no secret is configured (previous behavior returned true which is unsafe).
 	if (!webhookSecret) {
-		return true;
+		return false;
 	}
 
 	if (!rawBody || !signature) {
 		return false;
 	}
 
-	const digest = crypto
-		.createHmac("sha256", webhookSecret)
-		.update(rawBody)
-		.digest("hex");
+	const digest = crypto.createHmac("sha256", webhookSecret).update(rawBody).digest();
 
-	return digest === signature;
+	// Accept hex or base64 signatures from Chapa; normalize to buffers for
+	// timing-safe comparison.
+	let sigBuf;
+	try {
+		// Try hex first
+		sigBuf = Buffer.from(String(signature).trim(), "hex");
+		if (sigBuf.length === 0) throw new Error("invalid-hex");
+	} catch (err) {
+		try {
+			// Fallback to base64
+			sigBuf = Buffer.from(String(signature).trim(), "base64");
+			if (sigBuf.length === 0) throw new Error("invalid-base64");
+		} catch (err2) {
+			return false;
+		}
+	}
+
+	// Ensure equal length before timingSafeEqual to avoid exceptions.
+	if (!Buffer.isBuffer(digest) || digest.length !== sigBuf.length) {
+		// If lengths differ, compare in constant time using a padded buffer to
+		// avoid leaking timing — create a same-length buffer and compare.
+		const paddedDigest = Buffer.concat([digest, Buffer.alloc(Math.max(0, sigBuf.length - digest.length))]);
+		const paddedSig = Buffer.concat([sigBuf, Buffer.alloc(Math.max(0, paddedDigest.length - sigBuf.length))]);
+		return crypto.timingSafeEqual(paddedDigest, paddedSig);
+	}
+
+	return crypto.timingSafeEqual(digest, sigBuf);
 };
 

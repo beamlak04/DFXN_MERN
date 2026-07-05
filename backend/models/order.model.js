@@ -55,6 +55,11 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    chapaTransactionId: {
+      type: String,
+      default: "",
+      index: true,
+    },
     paidAt: {
       type: Date,
     },

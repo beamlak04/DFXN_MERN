@@ -30,7 +30,12 @@ export default function AdminNav({ children }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
-  const {logout} = useUserStore();
+  const { logout, user } = useUserStore();
+
+  const visibleNav = NAV.filter((n) => {
+    if (n.id === "monitoring" && user?.role !== "master") return false;
+    return true;
+  });
 
   // const Title = NAV.find((n) => (n.to === location.pathname)?.label) || "Admin";
   const Title =
@@ -87,7 +92,7 @@ export default function AdminNav({ children }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-[150px_1fr] gap-6">
         {/* Sidebar (desktop) */}
         <aside className="hidden lg:block">
-          <Sidebar />
+          <Sidebar navItems={visibleNav} />
         </aside>
 
         {/* Content */}
@@ -101,7 +106,7 @@ export default function AdminNav({ children }) {
             className="fixed inset-0 z-50 bg-black/30"
             onClick={() => setOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r shadow-xl p-4 flex flex-col">
+            <div className="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r shadow-xl p-4 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <span className="font-semibold text-lg">Menu</span>
               <button
@@ -112,7 +117,7 @@ export default function AdminNav({ children }) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <Sidebar onSelect={() => setOpen(false)} />
+            <Sidebar navItems={visibleNav} onSelect={() => setOpen(false)} />
           </div>
         </div>
       )}
@@ -123,7 +128,7 @@ export default function AdminNav({ children }) {
 function Sidebar({ onSelect }) {
   return (
     <nav className="space-y-1">
-      {NAV.map(({ id, label, icon, to }) => (
+      {(arguments[0].navItems || NAV).map(({ id, label, icon, to }) => (
         <NavLink
           key={id}
           to={to}

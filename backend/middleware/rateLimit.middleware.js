@@ -1,19 +1,16 @@
 import { redis } from "../lib/redis.js";
 
-const getClientIp = (req) => {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
-    return forwardedFor.split(",")[0].trim();
-  }
-  return req.ip || "unknown";
-};
+const getClientIp = (req) => req.ip || req.socket?.remoteAddress || "unknown";
 
-export const createRateLimiter = ({ windowMs, maxRequests }) => {
+export const createRateLimiter = ({ windowMs, maxRequests, keyFn, keyByIp = true }) => {
   return async (req, res, next) => {
     try {
       const clientIp = getClientIp(req);
       const windowSeconds = Math.max(Math.ceil(windowMs / 1000), 1);
-      const key = `rate_limit:${req.path}:${clientIp}`;
+      const extraKey = typeof keyFn === "function" ? keyFn(req) : req.path;
+      const key = keyByIp
+        ? `rate_limit:${extraKey}:${clientIp}`
+        : `rate_limit:${extraKey}`;
 
       const currentCount = await redis.incr(key);
       if (currentCount === 1) {
@@ -34,3 +31,14 @@ export const createRateLimiter = ({ windowMs, maxRequests }) => {
     }
   };
 };
+
+export const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+
+export const getEmailRateLimitKey = (email) => {
+  const normalized = normalizeEmail(email);
+  return normalized ? `email:${normalized}` : "email:unknown";
+};
+
+export const getLoginLockKey = (email) => `login_lock:${normalizeEmail(email)}`;
+
+export const getLoginFailureKey = (email) => `login_failures:${normalizeEmail(email)}`;

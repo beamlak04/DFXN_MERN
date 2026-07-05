@@ -1,10 +1,17 @@
 import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
 import {
   initializeChapaPayment,
   validateChapaCallbackSignature,
   verifyChapaPayment,
 } from "../lib/chapa.js";
 import { recordAuditEvent } from "../lib/auditLogger.js";
+import logger from "../lib/logger.js";
+import {
+  buildOrderProductsFromInventory,
+  decrementStockWithRollback,
+  rollbackStockUpdates,
+} from "../lib/orderSecurity.js";
 
 const buildCallbackUrl = (req) => {
   if (process.env.CHAPA_CALLBACK_URL) {
@@ -48,6 +55,33 @@ const FAILED_STATUSES = new Set([
 
 const normalizeChapaStatus = (status) => String(status || "").trim().toLowerCase();
 
+const extractChapaTransactionId = (verification) => {
+  const data = verification?.data || {};
+  return String(
+    data.id ||
+      data.transaction_id ||
+      data.reference ||
+      data.chapa_reference ||
+      data.tx_ref ||
+      ""
+  );
+};
+
+const getChapaEmail = (customerEmail) => {
+  const providedEmail = String(customerEmail || "").trim();
+  if (emailPattern.test(providedEmail)) {
+    return providedEmail;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    const error = new Error("A valid customer email is required for online payment");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return process.env.CHAPA_DEFAULT_EMAIL || "chapa.test@gmail.com";
+};
+
 const getNameParts = (name = "") => {
   const parts = String(name).trim().split(" ").filter(Boolean);
   if (parts.length === 0) {
@@ -65,22 +99,22 @@ const getNameParts = (name = "") => {
 };
 
 export const placeOrder = async (req, res) => {
+  const stockUpdates = [];
+  let createdOrder = null;
+
   try {
     const orderData = req.body;
     if (!Array.isArray(orderData?.cart) || orderData.cart.length === 0) {
       return res.status(400).json({ message: "cart is empty" });
     }
 
-    const products = orderData.cart.map((item) => ({
-      product: item._id,
-      quantity: item.quantity,
-      price: item.price,
-    }));
-
-    const totalAmount = products.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
+    const productIds = [...new Set(orderData.cart.map((item) => String(item?._id || "")))];
+    const productsInDb = await Product.find({ _id: { $in: productIds } }).lean();
+    const { products, totalAmount } = buildOrderProductsFromInventory(
+      orderData.cart,
+      productsInDb
     );
+    stockUpdates.push(...(await decrementStockWithRollback(Product, products)));
 
     const paymentMethod = ["COD", "Chapa", "Telebirr"].includes(orderData.paymentMethod)
       ? orderData.paymentMethod
@@ -101,6 +135,7 @@ export const placeOrder = async (req, res) => {
     }
 
     const order = await Order.create(orderPayload);
+    createdOrder = order;
 
     await recordAuditEvent({
       user: {
@@ -127,10 +162,7 @@ export const placeOrder = async (req, res) => {
     const { firstName, lastName } = getNameParts(orderData?.customer?.name);
     const txRef = `ORDER-${order._id}-${Date.now()}`;
 
-    const providedEmail = String(orderData?.customer?.email || "").trim();
-    const chapaEmail = emailPattern.test(providedEmail)
-      ? providedEmail
-      : process.env.CHAPA_DEFAULT_EMAIL || "chapa.test@gmail.com";
+    const chapaEmail = getChapaEmail(orderData?.customer?.email);
 
     const chapaResponse = await initializeChapaPayment({
       amount: totalAmount,
@@ -150,6 +182,8 @@ export const placeOrder = async (req, res) => {
 
     const checkoutUrl = chapaResponse?.data?.checkout_url;
     if (!checkoutUrl) {
+      await rollbackStockUpdates(Product, stockUpdates);
+      stockUpdates.splice(0, stockUpdates.length);
       await Order.findByIdAndUpdate(order._id, {
         paymentStatus: "failed",
         orderStatus: "failed",
@@ -168,8 +202,16 @@ export const placeOrder = async (req, res) => {
       txRef,
     });
   } catch (error) {
-    console.log("error in order place backend ", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in placeOrder");
+    if (stockUpdates.length > 0) {
+      await rollbackStockUpdates(Product, stockUpdates);
+    }
+    if (createdOrder?._id) {
+      await Order.findByIdAndDelete(createdOrder._id);
+    }
+    return res.status(error.statusCode || 500).json({
+      message: error.statusCode ? error.message : "Something went wrong. Please try again.",
+    });
   }
 
   // const {customerName, customerEmail, customerPhoneNumber, customerAddress} = orderData.customer;
@@ -180,8 +222,8 @@ export const getAllOrders = async (req, res) => {
     const orders = await Order.find().lean().sort({ createdAt: -1 });
     res.status(200).json({ orders });
   } catch (error) {
-    console.log("erron in getAllOrders", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getAllOrders");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -210,11 +252,13 @@ export const verifyOrderPayment = async (req, res) => {
     const verification = await verifyChapaPayment(txRef);
     const status = normalizeChapaStatus(verification?.data?.status);
     const amount = Number(verification?.data?.amount || 0);
+    const chapaTransactionId = extractChapaTransactionId(verification);
 
     if (SUCCESS_STATUSES.has(status) && amount >= order.totalAmount) {
       order.paymentStatus = "paid";
       order.orderStatus = "processing";
       order.paidAt = new Date();
+      order.chapaTransactionId = chapaTransactionId;
       await order.save();
 
       return res.status(200).json({
@@ -229,6 +273,7 @@ export const verifyOrderPayment = async (req, res) => {
     if (FAILED_STATUSES.has(status)) {
       order.paymentStatus = "failed";
       order.orderStatus = "failed";
+      order.chapaTransactionId = chapaTransactionId;
       await order.save();
 
       return res.status(200).json({
@@ -250,8 +295,8 @@ export const verifyOrderPayment = async (req, res) => {
       source: "chapa",
     });
   } catch (error) {
-    console.log("error in verifyOrderPayment", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in verifyOrderPayment");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -282,8 +327,8 @@ export const getPaymentResult = async (req, res) => {
         : "Payment is pending callback confirmation",
     });
   } catch (error) {
-    console.log("error in getPaymentResult", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getPaymentResult");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -297,7 +342,9 @@ export const chapaPaymentCallback = async (req, res) => {
     });
 
     if (!signatureValid) {
-      console.log("warning: chapa callback signature could not be validated, falling back to tx_ref verification");
+      logger.warn({ header: signatureHeader, signature }, "invalid chapa callback signature");
+      // Reject invalid/unauthenticated callbacks — caller should retry from Chapa.
+      return res.status(401).json({ message: "Invalid webhook signature" });
     }
 
     const txRef = req.body?.tx_ref || req.query?.tx_ref;
@@ -313,14 +360,17 @@ export const chapaPaymentCallback = async (req, res) => {
     const verification = await verifyChapaPayment(txRef);
     const status = normalizeChapaStatus(verification?.data?.status);
     const amount = Number(verification?.data?.amount || 0);
+    const chapaTransactionId = extractChapaTransactionId(verification);
 
     if (SUCCESS_STATUSES.has(status) && amount >= order.totalAmount) {
       order.paymentStatus = "paid";
       order.orderStatus = "processing";
       order.paidAt = new Date();
+      order.chapaTransactionId = chapaTransactionId;
     } else if (FAILED_STATUSES.has(status)) {
       order.paymentStatus = "failed";
       order.orderStatus = "failed";
+      order.chapaTransactionId = chapaTransactionId;
     }
 
     await order.save();
@@ -337,6 +387,7 @@ export const chapaPaymentCallback = async (req, res) => {
       resource: "orders/payment/callback",
       metadata: {
         orderId: order._id,
+        chapaTransactionId,
         paymentStatus: order.paymentStatus,
         orderStatus: order.orderStatus,
       },
@@ -344,8 +395,8 @@ export const chapaPaymentCallback = async (req, res) => {
 
     return res.status(200).json({ message: "Callback processed" });
   } catch (error) {
-    console.log("error in chapaPaymentCallback", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in chapaPaymentCallback");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -362,8 +413,8 @@ export const getOrderById = async (req, res) => {
     }
     return res.status(200).json(order);
   } catch (error) {
-    console.log("error in getting order: ", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getOrderById");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -398,8 +449,8 @@ export const editOrder = async (req, res) => {
     await order.save();
     res.status(200).json({ message: "Saved changes", order });
   } catch (error) {
-    console.log("error in editOrder: ", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in editOrder");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -412,7 +463,7 @@ export const deleteOrder = async (req, res) => {
     await Order.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Order deleted Successfully" });
   } catch (error) {
-    console.log("error deleting order", error.message);
-    res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in deleteOrder");
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };

@@ -1,8 +1,7 @@
 import ContactMessage from "../models/contactMessage.model.js";
 import { sendContactNotificationEmail } from "../lib/mailer.js";
 import SystemSettings from "../models/systemSettings.model.js";
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import logger from "../lib/logger.js";
 
 const normalizeString = (value) => {
   if (typeof value !== "string") {
@@ -28,43 +27,6 @@ export const submitContactMessage = async (req, res) => {
       });
     }
 
-    if (!name || name.length < 2 || name.length > 80) {
-      return res.status(400).json({
-        message: "Name must be between 2 and 80 characters",
-      });
-    }
-
-    if (!email || !emailPattern.test(email) || email.length > 120) {
-      return res.status(400).json({
-        message: "Please provide a valid email address",
-      });
-    }
-
-    if (subject.length > 120) {
-      return res.status(400).json({
-        message: "Subject must be 120 characters or less",
-      });
-    }
-
-    if (phone.length > 30) {
-      return res.status(400).json({
-        message: "Phone number is too long",
-      });
-    }
-
-    if (!message || message.length < 10 || message.length > 2000) {
-      return res.status(400).json({
-        message: "Message must be between 10 and 2000 characters",
-      });
-    }
-
-    const forwardedFor = req.headers["x-forwarded-for"];
-    const ipFromForwardedHeader = Array.isArray(forwardedFor)
-      ? forwardedFor[0]
-      : typeof forwardedFor === "string"
-      ? forwardedFor.split(",")[0]
-      : "";
-
     const createdMessage = await ContactMessage.create({
       name,
       email,
@@ -72,7 +34,7 @@ export const submitContactMessage = async (req, res) => {
       phone,
       message,
       sourcePage,
-      ipAddress: ipFromForwardedHeader || req.ip || "",
+      ipAddress: req.ip || "",
       userAgent: req.get("user-agent") || "",
     });
 
@@ -96,9 +58,9 @@ export const submitContactMessage = async (req, res) => {
       message: "Message received successfully",
     });
   } catch (error) {
-    console.log("error in submitContactMessage", error.message);
+    logger.error({ err: error }, "error in submitContactMessage");
     return res.status(500).json({
-      message: "Unable to submit your message right now. Please try again later.",
+      message: "Something went wrong. Please try again.",
     });
   }
 };
@@ -117,11 +79,13 @@ export const getContactMessages = async (req, res) => {
     }
 
     if (search) {
+      const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escapedSearch = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { subject: { $regex: search, $options: "i" } },
-        { message: { $regex: search, $options: "i" } },
+        { name: { $regex: escapedSearch, $options: "i" } },
+        { email: { $regex: escapedSearch, $options: "i" } },
+        { subject: { $regex: escapedSearch, $options: "i" } },
+        { message: { $regex: escapedSearch, $options: "i" } },
       ];
     }
 
@@ -144,8 +108,8 @@ export const getContactMessages = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("error in getContactMessages", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in getContactMessages");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -175,7 +139,7 @@ export const updateContactMessageStatus = async (req, res) => {
       contactMessage: updated,
     });
   } catch (error) {
-    console.log("error in updateContactMessageStatus", error.message);
-    return res.status(500).json({ message: error.message });
+    logger.error({ err: error }, "error in updateContactMessageStatus");
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };

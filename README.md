@@ -29,21 +29,23 @@ DFXN_MERN is a web application built using the MERN stack (MongoDB, Express.js, 
     cd DFXN_MERN
     ```
 
-2. Install server dependencies:
+2. Install backend dependencies from the repo root:
     ```bash
-    cd server
     npm install
     ```
 
-3. Install client dependencies:
+3. Install frontend dependencies:
     ```bash
-    cd ../client
+    cd frontend
     npm install
     ```
 
 ### Configuration
 
-- Create a `.env` file in the `server` directory with your MongoDB URI and other environment variables.
+- Copy `.env.example` to `.env` in the repo root and fill in real secrets.
+- In production, set `NODE_ENV=production`, configure `CHAPA_WEBHOOK_SECRET`, and use a secret store instead of committing credentials.
+- Online Chapa/Telebirr payments require a valid customer email in production. `CHAPA_DEFAULT_EMAIL` is only a local/sandbox fallback.
+- Admin audit logs are retained by MongoDB TTL index for `ADMIN_AUDIT_LOG_RETENTION_DAYS` days.
 
 Example contact-related variables:
 
@@ -65,6 +67,8 @@ CHAPA_SIGNATURE_HEADER=x-chapa-signature
 CHAPA_WEBHOOK_FIRST=true
 CHAPA_CALLBACK_URL=https://your-public-domain.com/api/orders/payment/callback
 CHAPA_RETURN_URL=http://localhost:5173/payment-result
+MAX_IMAGE_UPLOAD_BYTES=8388608
+ADMIN_AUDIT_LOG_RETENTION_DAYS=365
 ```
 
 ### Chapa Sandbox Checkout Test
@@ -85,14 +89,21 @@ Note:
 1. Start MongoDB (if running locally).
 2. Run the server:
     ```bash
-    cd server
     npm start
     ```
 3. Run the client (in another terminal):
     ```bash
-    cd client
-    npm start
+    cd frontend
+    npm run dev
     ```
+
+### Tests
+
+Run backend security unit tests from the repo root:
+
+```bash
+npm test
+```
 
 ## Usage
 
@@ -103,8 +114,8 @@ Note:
 
 ```
 DFXN_MERN/
-  client/    # React frontend source code
-  server/    # Node.js/Express/MongoDB backend code
+  frontend/  # React frontend source code
+  backend/   # Node.js/Express/MongoDB backend code
 ```
 
 ## Contributing

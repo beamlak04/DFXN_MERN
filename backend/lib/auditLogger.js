@@ -4,18 +4,7 @@ import AdminAuditLog from "../models/adminAuditLog.model.js";
 import User from "../models/user.model.js";
 import { redis } from "./redis.js";
 
-const getRequestIp = (req) => {
-  const forwardedFor = req?.headers?.["x-forwarded-for"];
-  if (Array.isArray(forwardedFor)) {
-    return forwardedFor[0] || "";
-  }
-
-  if (typeof forwardedFor === "string") {
-    return forwardedFor.split(",")[0].trim();
-  }
-
-  return req?.ip || "";
-};
+const getRequestIp = (req) => req?.ip || req?.socket?.remoteAddress || "";
 
 const mapMongoStatus = (readyState) => {
   if (readyState === 1) return "connected";

@@ -12,6 +12,28 @@ const refreshClient = axios.create({
 
 let refreshPromise = null;
 
+const readCookie = (name) => {
+    if (typeof document === "undefined") return null;
+    const match = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[2]) : null;
+};
+
+// Attach CSRF token for mutating requests using double-submit cookie pattern.
+axiosInstance.interceptors.request.use((config) => {
+    try {
+        const method = (config.method || "get").toLowerCase();
+        if (["get", "head", "options"].includes(method)) return config;
+        const csrf = readCookie("csrfToken");
+        if (csrf) {
+            config.headers = config.headers || {};
+            config.headers["x-csrf-token"] = csrf;
+        }
+    } catch (e) {
+        // ignore
+    }
+    return config;
+});
+
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
